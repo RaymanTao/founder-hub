@@ -1,0 +1,8 @@
+.next
+node_modules
+.pnpm-store
+out
+dist
+.env.local
+npm-debug.log*
+pnpm-debug.log*
