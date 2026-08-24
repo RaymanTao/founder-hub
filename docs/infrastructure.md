@@ -96,3 +96,8 @@ presigned PUT URL. Configure CORS on the R2 bucket for local development and pro
 
 Uploaded media files are stored in R2, while metadata is recorded in Supabase
 `media_assets`.
+
+When article URL import finds a remote `og:image` or `twitter:image` and R2 is
+configured, the image is copied to the `crawled-images/` prefix. The article `cover`
+uses the R2 public URL, and the original image URL is recorded in `media_assets.source_url`.
+If the copy fails or the file is not an image, import continues with the original URL.

@@ -8,6 +8,7 @@ import {
   upsertSupabaseArticleSource
 } from "@/lib/article-db";
 import { createInterpretationTemplate } from "@/lib/article-template";
+import { cacheRemoteImageToR2 } from "@/lib/remote-media";
 import { ArticleMeta, ArticleType } from "@/types/article";
 
 const contentDir = path.join(process.cwd(), "content", "writing");
@@ -237,6 +238,11 @@ export async function createArticleFromUrl(url: string) {
   const html = await response.text();
   const page = extractPageMeta(html, url);
   const slug = await ensureUniqueSlug(page.title);
+  const cachedCover = await cacheRemoteImageToR2({
+    imageUrl: page.image,
+    title: page.title,
+    sourceUrl: page.canonicalUrl
+  });
   const meta: ArticleMeta = {
     title: page.title,
     slug,
@@ -254,7 +260,7 @@ export async function createArticleFromUrl(url: string) {
     verified: false,
     access: "Free",
     tags: page.keywords,
-    cover: page.image
+    cover: cachedCover
   };
 
   const body = createInterpretationTemplate({
@@ -278,6 +284,7 @@ export async function createArticleFromUrl(url: string) {
         importedFrom: "url",
         description: page.description,
         image: page.image,
+        cachedCover,
         publishedAt: page.publishedAt,
         keywords: page.keywords
       }
