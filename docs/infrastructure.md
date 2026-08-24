@@ -15,12 +15,24 @@ Run `supabase/schema.sql` in the Supabase SQL editor before enabling live forms.
 
 Current tables:
 
+- `articles`
+- `article_revisions`
+- `article_sources`
 - `newsletter_subscribers`
 - `resource_leads`
 - `reader_favorites`
 - `media_assets`
 
 All tables use RLS and are managed through the service role from server-side routes.
+
+Article content defaults to local MDX files. To read articles from Supabase, set:
+
+```bash
+ARTICLE_CONTENT_SOURCE=supabase
+```
+
+The Supabase article reader is designed as an opt-in migration path. Keep the value as
+`mdx` until article rows have been imported and verified in production.
 
 ## Cloudflare R2
 

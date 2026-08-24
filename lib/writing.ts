@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
+import { getSupabaseArticleBySlug, listSupabaseArticles } from "@/lib/article-db";
 import { Article, ArticleMeta } from "@/types/article";
 
 const contentDir = path.join(process.cwd(), "content", "writing");
@@ -26,6 +27,13 @@ function normalizeArticleMeta(data: Record<string, unknown>): ArticleMeta {
 export async function getAllArticles(
   options: GetAllArticlesOptions = {}
 ): Promise<ArticleMeta[]> {
+  const databaseArticles = await listSupabaseArticles();
+  if (databaseArticles) {
+    return databaseArticles
+      .filter((article) => options.includeArchived || !article.archived)
+      .filter((article) => options.includeDrafts || article.published);
+  }
+
   const files = await fs.readdir(contentDir);
   const articles = await Promise.all(
     files
@@ -49,6 +57,9 @@ export async function getFeaturedArticles() {
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
+  const databaseArticle = await getSupabaseArticleBySlug(slug);
+  if (databaseArticle) return databaseArticle;
+
   const files = await fs.readdir(contentDir);
   const fileName = files.find((file) => file === `${slug}.mdx`);
 

@@ -144,3 +144,124 @@ on public.media_assets
 for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');
+
+create table if not exists public.articles (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  title text not null,
+  description text not null,
+  body text not null default '',
+  date date not null default current_date,
+  category text not null check (category in ('Build', 'AI', 'Growth', 'Solopreneur')),
+  type text not null check (
+    type in (
+      'Tutorial',
+      'Case Study',
+      'Essay',
+      'Build Log',
+      'Product Review',
+      'Founder Analysis',
+      'Experiment'
+    )
+  ),
+  reading_time text not null default '5 min',
+  featured boolean not null default false,
+  published boolean not null default false,
+  archived boolean not null default false,
+  number integer not null default 0,
+  source text not null default 'Founder Hub',
+  source_url text,
+  verified boolean not null default true,
+  access text not null default 'Free' check (access in ('Free', 'Deep Dive')),
+  tags jsonb not null default '[]'::jsonb,
+  audio_url text,
+  cover text,
+  locale text not null default 'zh-CN',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists articles_published_idx
+  on public.articles (published);
+
+create index if not exists articles_archived_idx
+  on public.articles (archived);
+
+create index if not exists articles_category_idx
+  on public.articles (category);
+
+create index if not exists articles_date_idx
+  on public.articles (date desc);
+
+drop trigger if exists articles_set_updated_at
+  on public.articles;
+
+create trigger articles_set_updated_at
+before update on public.articles
+for each row
+execute function public.set_updated_at();
+
+alter table public.articles enable row level security;
+
+drop policy if exists "Service role can manage articles"
+  on public.articles;
+
+create policy "Service role can manage articles"
+on public.articles
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
+create table if not exists public.article_revisions (
+  id uuid primary key default gen_random_uuid(),
+  article_id uuid not null references public.articles(id) on delete cascade,
+  title text not null,
+  description text not null,
+  body text not null,
+  meta jsonb not null default '{}'::jsonb,
+  created_by text not null default 'admin',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists article_revisions_article_id_idx
+  on public.article_revisions (article_id, created_at desc);
+
+alter table public.article_revisions enable row level security;
+
+drop policy if exists "Service role can manage article revisions"
+  on public.article_revisions;
+
+create policy "Service role can manage article revisions"
+on public.article_revisions
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
+create table if not exists public.article_sources (
+  id uuid primary key default gen_random_uuid(),
+  article_id uuid references public.articles(id) on delete set null,
+  source_url text not null,
+  source_title text,
+  source_site text,
+  author text,
+  fetched_at timestamptz not null default now(),
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists article_sources_article_id_idx
+  on public.article_sources (article_id);
+
+create index if not exists article_sources_source_url_idx
+  on public.article_sources (source_url);
+
+alter table public.article_sources enable row level security;
+
+drop policy if exists "Service role can manage article sources"
+  on public.article_sources;
+
+create policy "Service role can manage article sources"
+on public.article_sources
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
