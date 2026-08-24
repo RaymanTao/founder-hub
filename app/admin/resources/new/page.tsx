@@ -36,7 +36,7 @@ export default async function AdminNewResourcePage({ searchParams }: Props) {
           新建资源
         </h1>
         <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-          创建后会写入 data/resources.json，并显示在前台资源页。
+          创建后会写入当前资源内容源，并显示在前台资源页。
         </p>
       </div>
 

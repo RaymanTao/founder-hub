@@ -3,8 +3,8 @@ import { ArticleCard } from "@/components/cards/article-card";
 import { HomeHero } from "@/components/sections/home-hero";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Section } from "@/components/ui/section";
-import { resources } from "@/data/resources";
 import { products } from "@/data/products";
+import { getPublicResources } from "@/lib/resources";
 import { createMetadata } from "@/lib/seo";
 import { getAllArticles } from "@/lib/writing";
 
@@ -14,7 +14,10 @@ export const metadata = createMetadata({
 });
 
 export default async function HomePage() {
-  const articles = await getAllArticles();
+  const [articles, resources] = await Promise.all([
+    getAllArticles(),
+    getPublicResources()
+  ]);
   const featuredArticle = articles.find((item) => item.featured) ?? articles[0];
   const latestArticles = articles
     .filter((item) => item.slug !== featuredArticle?.slug)

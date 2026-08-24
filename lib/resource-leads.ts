@@ -1,5 +1,5 @@
-import { resources } from "@/data/resources";
 import { subscribeToNewsletter } from "@/lib/newsletter";
+import { getPublicResources } from "@/lib/resources";
 import { isSupabaseConfigured, supabaseFetch } from "@/lib/supabase";
 
 type ClaimResourceInput = {
@@ -46,6 +46,7 @@ async function createLead(input: {
 }
 
 export async function claimResource(input: ClaimResourceInput) {
+  const resources = await getPublicResources();
   const resource = resources.find((item) => item.id === input.resourceId);
 
   if (!resource) {

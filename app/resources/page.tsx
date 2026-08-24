@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ResourceClaimForm } from "@/components/forms/resource-claim-form";
 import { Section } from "@/components/ui/section";
 import { SectionHeader } from "@/components/ui/section-header";
-import { resources } from "@/data/resources";
+import { getPublicResources } from "@/lib/resources";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
@@ -11,7 +11,10 @@ export const metadata = createMetadata({
   path: "/resources"
 });
 
-export default function ResourcesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ResourcesPage() {
+  const resources = await getPublicResources();
   const featured = resources.filter((resource) => resource.featured);
   const rest = resources.filter((resource) => !resource.featured);
 

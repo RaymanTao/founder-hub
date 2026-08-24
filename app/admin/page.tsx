@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { logoutAdmin, setArticleArchivedAction } from "@/app/admin/actions";
-import { resources } from "@/data/resources";
 import { requireAdmin } from "@/lib/admin-auth";
+import { getAllResources } from "@/lib/resources";
 import { formatDate } from "@/lib/utils";
 import { getAllArticles } from "@/lib/writing";
 import type { ArticleAccess, ArticleCategory } from "@/types/article";
@@ -61,7 +61,10 @@ export default async function AdminPage({ searchParams }: Props) {
   const status = params.status ?? "All";
   const category = params.category ?? "All";
   const access = params.access ?? "All";
-  const articles = await getAllArticles({ includeDrafts: true, includeArchived: true });
+  const [articles, resources] = await Promise.all([
+    getAllArticles({ includeDrafts: true, includeArchived: true }),
+    getAllResources({ includeArchived: true })
+  ]);
   const featuredCount = articles.filter((article) => article.featured).length;
   const deepCount = articles.filter((article) => article.access === "Deep Dive").length;
   const draftCount = articles.filter((article) => !article.published).length;

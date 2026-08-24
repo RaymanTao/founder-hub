@@ -1,5 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+  findSupabaseResourceId,
+  getSupabaseResourceById,
+  listSupabaseResources,
+  patchSupabaseResourceArchived,
+  shouldWriteResourcesToSupabase,
+  upsertSupabaseResource
+} from "@/lib/resource-db";
 import { Resource } from "@/types/resource";
 
 const resourcesPath = path.join(process.cwd(), "data", "resources.json");
@@ -16,6 +24,9 @@ function slugify(input: string) {
 }
 
 export async function getAdminResources() {
+  const databaseResources = await listSupabaseResources({ includeArchived: true });
+  if (databaseResources) return databaseResources;
+
   const raw = await fs.readFile(resourcesPath, "utf8");
   return (JSON.parse(raw) as Resource[]).map((resource) => ({
     ...resource,
@@ -27,13 +38,13 @@ async function writeResources(resources: Resource[]) {
   await fs.writeFile(resourcesPath, `${JSON.stringify(resources, null, 2)}\n`, "utf8");
 }
 
-function ensureUniqueId(resources: Resource[], title: string) {
+async function ensureUniqueId(resources: Resource[], title: string) {
   const base = slugify(title) || `resource-${Date.now()}`;
   const ids = new Set(resources.map((resource) => resource.id));
   let id = base;
   let index = 2;
 
-  while (ids.has(id)) {
+  while (ids.has(id) || (shouldWriteResourcesToSupabase() && await findSupabaseResourceId(id))) {
     id = `${base}-${index}`;
     index += 1;
   }
@@ -42,18 +53,34 @@ function ensureUniqueId(resources: Resource[], title: string) {
 }
 
 export async function getAdminResourceById(id: string) {
+  const databaseResource = await getSupabaseResourceById(id);
+  if (databaseResource) return databaseResource;
+
   const resources = await getAdminResources();
   return resources.find((resource) => resource.id === id) ?? null;
 }
 
 export async function createResource(input: ResourceInput) {
   const resources = await getAdminResources();
-  const id = ensureUniqueId(resources, input.title);
+  const id = await ensureUniqueId(resources, input.title);
+
+  if (shouldWriteResourcesToSupabase()) {
+    await upsertSupabaseResource(id, input);
+    return id;
+  }
+
   await writeResources([{ id, ...input }, ...resources]);
   return id;
 }
 
 export async function updateResource(id: string, input: ResourceInput) {
+  if (shouldWriteResourcesToSupabase()) {
+    const existing = await getSupabaseResourceById(id);
+    if (!existing) return false;
+    await upsertSupabaseResource(id, input);
+    return true;
+  }
+
   const resources = await getAdminResources();
   const exists = resources.some((resource) => resource.id === id);
   if (!exists) return false;
@@ -65,6 +92,13 @@ export async function updateResource(id: string, input: ResourceInput) {
 }
 
 export async function setResourceArchived(id: string, archived: boolean) {
+  if (shouldWriteResourcesToSupabase()) {
+    const existing = await getSupabaseResourceById(id);
+    if (!existing) return false;
+    await patchSupabaseResourceArchived(id, archived);
+    return true;
+  }
+
   const resources = await getAdminResources();
   const exists = resources.some((resource) => resource.id === id);
   if (!exists) return false;

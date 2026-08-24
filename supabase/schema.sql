@@ -269,3 +269,47 @@ on public.article_sources
 for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');
+
+create table if not exists public.resources (
+  id text primary key,
+  title text not null,
+  description text not null,
+  category text not null check (category in ('Toolkit', 'Template', 'Workflow', 'Checklist')),
+  status text not null check (status in ('Free', 'Coming Soon')),
+  format text not null,
+  audience text not null,
+  href text not null,
+  featured boolean not null default false,
+  archived boolean not null default false,
+  tags jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists resources_featured_idx
+  on public.resources (featured);
+
+create index if not exists resources_archived_idx
+  on public.resources (archived);
+
+create index if not exists resources_category_idx
+  on public.resources (category);
+
+drop trigger if exists resources_set_updated_at
+  on public.resources;
+
+create trigger resources_set_updated_at
+before update on public.resources
+for each row
+execute function public.set_updated_at();
+
+alter table public.resources enable row level security;
+
+drop policy if exists "Service role can manage resources"
+  on public.resources;
+
+create policy "Service role can manage resources"
+on public.resources
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');

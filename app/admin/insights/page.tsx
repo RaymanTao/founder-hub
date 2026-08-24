@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAdminLeads } from "@/lib/admin-leads";
+import { getAllResources } from "@/lib/resources";
 import { formatDate } from "@/lib/utils";
 import { getAllArticles } from "@/lib/writing";
 import type { ArticleMeta } from "@/types/article";
@@ -103,7 +104,7 @@ export default async function AdminInsightsPage() {
     getAllArticles({ includeDrafts: true, includeArchived: true }),
     getAdminLeads()
   ]);
-  const { resources } = await import("@/data/resources");
+  const resources = await getAllResources({ includeArchived: true });
   const resourceSlugById = new Map(
     resources
       .map((resource) => [resource.id, getSlugFromHref(resource.href)] as const)

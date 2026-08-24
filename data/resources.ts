@@ -1,9 +1,3 @@
-import resourcesData from "@/data/resources.json";
-import { Resource } from "@/types/resource";
+import { getStaticResources } from "@/lib/resources";
 
-export const resources = (resourcesData as Resource[])
-  .map((resource) => ({
-    ...resource,
-    archived: resource.archived === true
-  }))
-  .filter((resource) => !resource.archived);
+export const resources = getStaticResources();

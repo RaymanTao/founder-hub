@@ -18,6 +18,7 @@ Current tables:
 - `articles`
 - `article_revisions`
 - `article_sources`
+- `resources`
 - `newsletter_subscribers`
 - `resource_leads`
 - `reader_favorites`
@@ -47,6 +48,22 @@ npm run import:articles
 
 The import script upserts by `slug`, so it is safe to run again after editing local MDX
 content. Source records are also deduplicated by `article_id` and `source_url`.
+
+Resource content defaults to local `data/resources.json`. To read and write resources
+from Supabase, set:
+
+```bash
+RESOURCE_CONTENT_SOURCE=supabase
+```
+
+Import local resources into Supabase with:
+
+```bash
+npm run import:resources -- --dry-run
+npm run import:resources
+```
+
+The resource import script upserts by `id`, so it is safe to rerun.
 
 ## Cloudflare R2
 
