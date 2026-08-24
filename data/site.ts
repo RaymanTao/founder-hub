@@ -1,9 +1,10 @@
 import { BuildChallenge, NavItem } from "@/types/site";
 
 export const navigation: NavItem[] = [
+  { label: "Writing", href: "/writing" },
+  { label: "Resources", href: "/resources" },
   { label: "Products", href: "/products" },
   { label: "Projects", href: "/projects" },
-  { label: "Writing", href: "/writing" },
   { label: "Services", href: "/services" },
   { label: "About", href: "/about" }
 ];

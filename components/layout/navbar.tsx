@@ -1,12 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button-link";
 import { navigation } from "@/data/site";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [readerEmail, setReaderEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((data: { email: string | null }) => setReaderEmail(data.email))
+      .catch(() => setReaderEmail(null));
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[rgba(250,246,239,0.82)] backdrop-blur-[10px]">
@@ -30,7 +38,10 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-3 md:flex">
+          <ButtonLink href={readerEmail ? "/account" : "/login"} variant="secondary">
+            {readerEmail ? "我的" : "登录"}
+          </ButtonLink>
           <ButtonLink href="/contact">发起咨询</ButtonLink>
         </div>
 
@@ -58,6 +69,13 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
+            <Link
+              href={readerEmail ? "/account" : "/login"}
+              onClick={() => setOpen(false)}
+              className="rounded-2xl border border-[var(--border)] bg-[rgba(255,255,255,0.65)] px-4 py-3 text-sm font-medium text-[var(--foreground)]"
+            >
+              {readerEmail ? "我的账号" : "登录"}
+            </Link>
             <Link
               href="/contact"
               onClick={() => setOpen(false)}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ai-solopreneur-stack",
+    "title": "AI Solopreneur Stack 2026",
+    "description": "围绕 Idea、Research、Build、Automation、Payment 和 Growth 的工具清单。",
+    "category": "Toolkit",
+    "status": "Free",
+    "format": "Notion / PDF",
+    "audience": "一人公司、独立开发者、AI 产品创始人",
+    "href": "/products",
+    "featured": true,
+    "tags": ["工具栈", "一人公司", "AI 产品"]
+  },
+  {
+    "id": "agent-automation-brief",
+    "title": "Agent 自动化 Brief 模板",
+    "description": "在开工前明确目标、输入、边界、成功标准和人工兜底方案。",
+    "category": "Template",
+    "status": "Free",
+    "format": "Markdown",
+    "audience": "需要设计 Agent 或自动化流程的小团队",
+    "href": "/writing/agent-automation-brief",
+    "featured": true,
+    "tags": ["AI Agent", "自动化", "交付"]
+  },
+  {
+    "id": "content-workflow-map",
+    "title": "AI 内容工作流地图",
+    "description": "把选题、研究、撰写、分发和复盘拆成可复用流程，减少每次从零开始。",
+    "category": "Workflow",
+    "status": "Coming Soon",
+    "format": "Canvas / Markdown",
+    "audience": "用内容建立信任和获客路径的创始人",
+    "href": "/writing/ai-content-workflow",
+    "featured": false,
+    "tags": ["内容系统", "增长", "AI Workflow"]
+  }
+]

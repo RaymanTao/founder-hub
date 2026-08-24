@@ -9,19 +9,19 @@ export function HomeHero() {
     <Section className="pb-8 pt-12 sm:pb-10 sm:pt-18">
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
         <div className="max-w-4xl">
-          <Badge>正在构建 AI-first one-person company</Badge>
+          <Badge>AI 创业内容库 · 产品实验室</Badge>
           <h1 className="mt-5 max-w-3xl text-5xl font-semibold tracking-[-0.05em] text-[var(--foreground)] sm:text-6xl lg:text-[4.5rem] lg:leading-[0.96]">
-            为一人公司时代构建
+            把 AI 创业，
             <br />
-            AI 产品。
+            讲清楚并做出来。
           </h1>
           <p className="mt-5 max-w-xl text-base leading-8 text-[var(--secondary)] sm:text-lg">
-            用 AI、Agent 和自动化构建产品，探索一个人如何完成从 Idea、开发、增长到变现。
+            这里持续沉淀 AI 产品、Agent 自动化、增长系统和一人公司实验，把文章、资源、产品与服务连成一个可复用的个人系统。
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="/projects">查看项目</ButtonLink>
-            <ButtonLink href="/contact" variant="secondary">
-              发起合作咨询
+            <ButtonLink href="/writing">进入内容库</ButtonLink>
+            <ButtonLink href="/resources" variant="secondary">
+              查看资源
             </ButtonLink>
           </div>
           <div className="mt-7 flex flex-wrap gap-2.5">
@@ -33,7 +33,7 @@ export function HomeHero() {
 
         <aside className="hero-focus-card rounded-[1.6rem] border border-[var(--border)] bg-[rgba(255,252,247,0.76)] p-6 shadow-[var(--shadow-soft)] backdrop-blur-[8px]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
-            Current Focus
+            System Focus
           </p>
           <div className="mt-4 grid grid-cols-3 gap-3 border-b border-[var(--border)] pb-5">
             <div>
@@ -69,7 +69,7 @@ export function HomeHero() {
                 Founder Hub
               </h3>
               <p className="mt-2 text-sm leading-7 text-[var(--secondary)]">
-                个人品牌官网、内容中心和商业化中的核心枢纽，持续迭代中。
+                从个人品牌官网升级为内容库、资源中心和商业化入口，持续迭代中。
               </p>
             </div>
 
@@ -100,10 +100,10 @@ export function HomeHero() {
                 </span>
               </div>
               <h3 className="mt-2 text-lg font-semibold text-[var(--foreground)]">
-                Open Services
+                Founder Services
               </h3>
               <p className="mt-2 text-sm leading-7 text-[var(--secondary)]">
-                当前开放咨询、Skill 开发、自媒体支持，以及 AI 产品相关合作。
+                当前开放咨询、Skill 开发、自动化方案，以及 AI 产品相关合作。
               </p>
             </div>
           </div>

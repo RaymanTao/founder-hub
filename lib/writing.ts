@@ -5,7 +5,27 @@ import { Article, ArticleMeta } from "@/types/article";
 
 const contentDir = path.join(process.cwd(), "content", "writing");
 
-export async function getAllArticles(): Promise<ArticleMeta[]> {
+type GetAllArticlesOptions = {
+  includeDrafts?: boolean;
+  includeArchived?: boolean;
+};
+
+function normalizeArticleMeta(data: Record<string, unknown>): ArticleMeta {
+  return {
+    ...(data as ArticleMeta),
+    number: Number(data.number ?? 0),
+    source: typeof data.source === "string" ? data.source : "Founder Hub",
+    verified: data.verified !== false,
+    access: data.access === "Deep Dive" ? "Deep Dive" : "Free",
+    published: data.published !== false,
+    archived: data.archived === true,
+    tags: Array.isArray(data.tags) ? data.tags.map(String) : []
+  };
+}
+
+export async function getAllArticles(
+  options: GetAllArticlesOptions = {}
+): Promise<ArticleMeta[]> {
   const files = await fs.readdir(contentDir);
   const articles = await Promise.all(
     files
@@ -13,13 +33,14 @@ export async function getAllArticles(): Promise<ArticleMeta[]> {
       .map(async (file) => {
         const raw = await fs.readFile(path.join(contentDir, file), "utf8");
         const { data } = matter(raw);
-        return data as ArticleMeta;
+        return normalizeArticleMeta(data);
       })
   );
 
-  return articles.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  return articles
+    .filter((article) => options.includeArchived || !article.archived)
+    .filter((article) => options.includeDrafts || article.published)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export async function getFeaturedArticles() {
@@ -39,7 +60,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   const { data, content } = matter(raw);
 
   return {
-    ...(data as ArticleMeta),
+    ...normalizeArticleMeta(data),
     content
   };
 }
