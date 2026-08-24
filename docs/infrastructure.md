@@ -39,6 +39,9 @@ When `ARTICLE_CONTENT_SOURCE=supabase`, admin article create, import, edit, arch
 template completion, and AI draft actions write to Supabase instead of local MDX files.
 Each save also creates an `article_revisions` row.
 
+Article revision history is available at `/admin/articles/[slug]/revisions` after
+Supabase article mode is enabled and at least one save has created a revision.
+
 Import local MDX articles into Supabase with:
 
 ```bash

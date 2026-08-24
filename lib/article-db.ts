@@ -28,6 +28,17 @@ export type ArticleWriteInput = ArticleMeta & {
   content: string;
 };
 
+export type ArticleRevision = {
+  id: string;
+  article_id: string;
+  title: string;
+  description: string;
+  body: string;
+  meta: Record<string, unknown>;
+  created_by: string;
+  created_at: string;
+};
+
 const articleFields = [
   "id",
   "title",
@@ -263,4 +274,63 @@ export async function upsertSupabaseArticleSource(input: {
   if (!response.ok) {
     throw new Error(`ARTICLE_SOURCE_UPSERT_FAILED_${response.status}`);
   }
+}
+
+export async function listSupabaseArticleRevisions(slug: string) {
+  if (!shouldReadArticlesFromSupabase()) return null;
+
+  const articleResponse = await supabaseFetch(
+    `articles?slug=eq.${encodeURIComponent(slug)}&select=id&limit=1`
+  );
+
+  if (!articleResponse.ok) {
+    throw new Error(`ARTICLE_REVISION_ARTICLE_FIND_FAILED_${articleResponse.status}`);
+  }
+
+  const articleRows = (await articleResponse.json()) as Array<{ id: string }>;
+  const articleId = articleRows[0]?.id;
+  if (!articleId) return [];
+
+  const response = await supabaseFetch(
+    `article_revisions?article_id=eq.${encodeURIComponent(
+      articleId
+    )}&select=id,article_id,title,description,body,meta,created_by,created_at&order=created_at.desc&limit=100`
+  );
+
+  if (!response.ok) {
+    throw new Error(`ARTICLE_REVISIONS_LIST_FAILED_${response.status}`);
+  }
+
+  return (await response.json()) as ArticleRevision[];
+}
+
+export async function getSupabaseArticleRevision(slug: string, revisionId: string) {
+  if (!shouldReadArticlesFromSupabase()) return null;
+
+  const articleResponse = await supabaseFetch(
+    `articles?slug=eq.${encodeURIComponent(slug)}&select=id&limit=1`
+  );
+
+  if (!articleResponse.ok) {
+    throw new Error(`ARTICLE_REVISION_ARTICLE_FIND_FAILED_${articleResponse.status}`);
+  }
+
+  const articleRows = (await articleResponse.json()) as Array<{ id: string }>;
+  const articleId = articleRows[0]?.id;
+  if (!articleId) return null;
+
+  const response = await supabaseFetch(
+    `article_revisions?id=eq.${encodeURIComponent(
+      revisionId
+    )}&article_id=eq.${encodeURIComponent(
+      articleId
+    )}&select=id,article_id,title,description,body,meta,created_by,created_at&limit=1`
+  );
+
+  if (!response.ok) {
+    throw new Error(`ARTICLE_REVISION_FIND_FAILED_${response.status}`);
+  }
+
+  const rows = (await response.json()) as ArticleRevision[];
+  return rows[0] ?? null;
 }

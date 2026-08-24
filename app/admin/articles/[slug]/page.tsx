@@ -160,6 +160,12 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
             预览草稿
           </Link>
           <Link
+            href={`/admin/articles/${article.slug}/revisions`}
+            className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+          >
+            版本历史
+          </Link>
+          <Link
             href={`/writing/${article.slug}`}
             className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
           >
