@@ -6,7 +6,9 @@ import {
   generateArticleDraftAction,
   saveArticleMeta
 } from "@/app/admin/actions";
+import { ArticleCoverField } from "@/app/admin/articles/[slug]/article-cover-field";
 import { requireAdmin } from "@/lib/admin-auth";
+import { listMediaAssets } from "@/lib/media-assets";
 import { getArticleBySlug } from "@/lib/writing";
 import type { ArticleAccess, ArticleCategory, ArticleType } from "@/types/article";
 
@@ -108,6 +110,7 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
 
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
+  const mediaAssets = await listMediaAssets();
   const query = (await searchParams) ?? {};
 
   if (!article) {
@@ -273,12 +276,17 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
               required={false}
               defaultValue={article.audioUrl}
             />
-            <Field
-              label="封面路径"
-              name="cover"
-              required={false}
-              defaultValue={article.cover}
-            />
+            <div className="md:col-span-2">
+              <ArticleCoverField
+                defaultValue={article.cover}
+                mediaAssets={mediaAssets.map((asset) => ({
+                  id: asset.id,
+                  key: asset.key,
+                  url: asset.url,
+                  alt: asset.alt
+                }))}
+              />
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-5 border-t border-[var(--border)] pt-5">
