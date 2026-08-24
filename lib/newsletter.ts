@@ -1,3 +1,5 @@
+import { isSupabaseConfigured, supabaseFetch } from "@/lib/supabase";
+
 type SubscribeInput = {
   email: string;
   source: string;
@@ -8,13 +10,6 @@ type SubscribeResult = {
   alreadySubscribed: boolean;
 };
 
-function getSupabaseConfig() {
-  return {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") ?? "",
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
-  };
-}
-
 function getResendConfig() {
   return {
     apiKey: process.env.RESEND_API_KEY ?? "",
@@ -23,28 +18,9 @@ function getResendConfig() {
   };
 }
 
-export function isSupabaseConfigured() {
-  const config = getSupabaseConfig();
-  return Boolean(config.url && config.serviceRoleKey);
-}
-
 function isResendConfigured() {
   const config = getResendConfig();
   return Boolean(config.apiKey && config.from);
-}
-
-async function supabaseFetch(path: string, init: RequestInit = {}) {
-  const config = getSupabaseConfig();
-
-  return fetch(`${config.url}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: config.serviceRoleKey,
-      Authorization: `Bearer ${config.serviceRoleKey}`,
-      "Content-Type": "application/json",
-      ...(init.headers ?? {})
-    }
-  });
 }
 
 async function findSubscriber(email: string) {

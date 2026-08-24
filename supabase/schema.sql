@@ -105,3 +105,42 @@ on public.reader_favorites
 for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');
+
+create table if not exists public.media_assets (
+  id uuid primary key default gen_random_uuid(),
+  key text not null unique,
+  url text not null,
+  bucket text not null,
+  content_type text not null,
+  size_bytes integer,
+  alt text,
+  source_url text,
+  context text not null default 'admin-upload',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists media_assets_context_idx
+  on public.media_assets (context);
+
+create index if not exists media_assets_created_at_idx
+  on public.media_assets (created_at desc);
+
+drop trigger if exists media_assets_set_updated_at
+  on public.media_assets;
+
+create trigger media_assets_set_updated_at
+before update on public.media_assets
+for each row
+execute function public.set_updated_at();
+
+alter table public.media_assets enable row level security;
+
+drop policy if exists "Service role can manage media assets"
+  on public.media_assets;
+
+create policy "Service role can manage media assets"
+on public.media_assets
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');

@@ -1,4 +1,4 @@
-import { isSupabaseConfigured } from "@/lib/newsletter";
+import { isSupabaseConfigured, supabaseFetch } from "@/lib/supabase";
 
 export type NewsletterSubscriber = {
   id: string;
@@ -24,19 +24,6 @@ export type ReaderFavorite = {
   article_title: string;
   created_at: string;
 };
-
-async function supabaseFetch(path: string) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") ?? "";
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-
-  return fetch(`${url}/rest/v1/${path}`, {
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`
-    },
-    cache: "no-store"
-  });
-}
 
 async function getNewsletterSubscribers() {
   const response = await supabaseFetch(

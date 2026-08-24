@@ -1,4 +1,4 @@
-import { isSupabaseConfigured } from "@/lib/newsletter";
+import { isSupabaseConfigured, supabaseFetch } from "@/lib/supabase";
 
 export type Favorite = {
   id: string;
@@ -7,22 +7,6 @@ export type Favorite = {
   article_title: string;
   created_at: string;
 };
-
-async function supabaseFetch(path: string, init: RequestInit = {}) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") ?? "";
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-
-  return fetch(`${url}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      "Content-Type": "application/json",
-      ...(init.headers ?? {})
-    },
-    cache: "no-store"
-  });
-}
 
 export async function getFavorite(email: string, slug: string) {
   if (!isSupabaseConfigured()) return null;

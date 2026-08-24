@@ -122,7 +122,8 @@ export default async function AdminPage({ searchParams }: Props) {
           ["深度", deepCount, "/admin?access=Deep+Dive"],
           ["草稿", draftCount, "/admin?status=Draft"],
           ["归档", archivedCount, "/admin?status=Archived"],
-          ["资源", resources.length, "/admin/resources"]
+          ["资源", resources.length, "/admin/resources"],
+          ["媒体", "R2", "/admin/media"]
         ].map(([label, value, href]) => (
           <Link
             key={label}
@@ -148,6 +149,12 @@ export default async function AdminPage({ searchParams }: Props) {
               className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
             >
               内容洞察
+            </Link>
+            <Link
+              href="/admin/media"
+              className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+            >
+              媒体库
             </Link>
             <Link
               href="/admin/leads"

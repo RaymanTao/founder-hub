@@ -1,26 +1,12 @@
 import { resources } from "@/data/resources";
-import { isSupabaseConfigured, subscribeToNewsletter } from "@/lib/newsletter";
+import { subscribeToNewsletter } from "@/lib/newsletter";
+import { isSupabaseConfigured, supabaseFetch } from "@/lib/supabase";
 
 type ClaimResourceInput = {
   email: string;
   resourceId: string;
   source: string;
 };
-
-async function supabaseFetch(path: string, init: RequestInit = {}) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") ?? "";
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-
-  return fetch(`${url}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      "Content-Type": "application/json",
-      ...(init.headers ?? {})
-    }
-  });
-}
 
 async function findLead(email: string, resourceId: string) {
   const response = await supabaseFetch(
