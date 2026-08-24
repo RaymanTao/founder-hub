@@ -246,7 +246,8 @@ create table if not exists public.article_sources (
   author text,
   fetched_at timestamptz not null default now(),
   metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (article_id, source_url)
 );
 
 create index if not exists article_sources_article_id_idx

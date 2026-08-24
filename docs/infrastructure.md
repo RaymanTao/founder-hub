@@ -34,6 +34,16 @@ ARTICLE_CONTENT_SOURCE=supabase
 The Supabase article reader is designed as an opt-in migration path. Keep the value as
 `mdx` until article rows have been imported and verified in production.
 
+Import local MDX articles into Supabase with:
+
+```bash
+npm run import:articles -- --dry-run
+npm run import:articles
+```
+
+The import script upserts by `slug`, so it is safe to run again after editing local MDX
+content. Source records are also deduplicated by `article_id` and `source_url`.
+
 ## Cloudflare R2
 
 Set these environment variables in production:
