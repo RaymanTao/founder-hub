@@ -256,6 +256,9 @@ create index if not exists article_sources_article_id_idx
 create index if not exists article_sources_source_url_idx
   on public.article_sources (source_url);
 
+create unique index if not exists article_sources_article_id_source_url_key
+  on public.article_sources (article_id, source_url);
+
 alter table public.article_sources enable row level security;
 
 drop policy if exists "Service role can manage article sources"

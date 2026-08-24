@@ -34,6 +34,10 @@ ARTICLE_CONTENT_SOURCE=supabase
 The Supabase article reader is designed as an opt-in migration path. Keep the value as
 `mdx` until article rows have been imported and verified in production.
 
+When `ARTICLE_CONTENT_SOURCE=supabase`, admin article create, import, edit, archive,
+template completion, and AI draft actions write to Supabase instead of local MDX files.
+Each save also creates an `article_revisions` row.
+
 Import local MDX articles into Supabase with:
 
 ```bash

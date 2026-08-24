@@ -2,6 +2,7 @@ import { Article, ArticleMeta } from "@/types/article";
 import { isSupabaseConfigured, supabaseFetch } from "@/lib/supabase";
 
 type ArticleRow = {
+  id?: string;
   title: string;
   slug: string;
   description: string;
@@ -23,7 +24,12 @@ type ArticleRow = {
   body?: string | null;
 };
 
+export type ArticleWriteInput = ArticleMeta & {
+  content: string;
+};
+
 const articleFields = [
+  "id",
   "title",
   "slug",
   "description",
@@ -75,6 +81,10 @@ export function shouldReadArticlesFromSupabase() {
   return isSupabaseConfigured() && isSupabaseArticleSourceEnabled();
 }
 
+export function shouldWriteArticlesToSupabase() {
+  return shouldReadArticlesFromSupabase();
+}
+
 export async function listSupabaseArticles() {
   if (!shouldReadArticlesFromSupabase()) return null;
 
@@ -109,4 +119,148 @@ export async function getSupabaseArticleBySlug(slug: string) {
     ...mapArticleRow(row),
     content: row.body ?? ""
   } satisfies Article;
+}
+
+function toArticlePayload(article: ArticleWriteInput) {
+  return {
+    slug: article.slug,
+    title: article.title,
+    description: article.description,
+    body: article.content.trim(),
+    date: article.date,
+    category: article.category,
+    type: article.type,
+    reading_time: article.readingTime,
+    featured: article.featured,
+    published: article.published,
+    archived: article.archived,
+    number: article.number,
+    source: article.source,
+    source_url: article.sourceUrl ?? null,
+    verified: article.verified,
+    access: article.access,
+    tags: article.tags,
+    audio_url: article.audioUrl ?? null,
+    cover: article.cover ?? null
+  };
+}
+
+async function createArticleRevision(articleId: string, article: ArticleWriteInput) {
+  const response = await supabaseFetch("article_revisions", {
+    method: "POST",
+    headers: {
+      Prefer: "return=minimal"
+    },
+    body: JSON.stringify({
+      article_id: articleId,
+      title: article.title,
+      description: article.description,
+      body: article.content.trim(),
+      meta: {
+        slug: article.slug,
+        date: article.date,
+        category: article.category,
+        type: article.type,
+        readingTime: article.readingTime,
+        featured: article.featured,
+        published: article.published,
+        archived: article.archived,
+        number: article.number,
+        source: article.source,
+        sourceUrl: article.sourceUrl,
+        verified: article.verified,
+        access: article.access,
+        tags: article.tags,
+        audioUrl: article.audioUrl,
+        cover: article.cover
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`ARTICLE_REVISION_INSERT_FAILED_${response.status}`);
+  }
+}
+
+export async function upsertSupabaseArticle(article: ArticleWriteInput) {
+  if (!shouldWriteArticlesToSupabase()) return null;
+
+  const response = await supabaseFetch("articles?on_conflict=slug&select=id,slug", {
+    method: "POST",
+    headers: {
+      Prefer: "resolution=merge-duplicates,return=representation"
+    },
+    body: JSON.stringify(toArticlePayload(article))
+  });
+
+  if (!response.ok) {
+    throw new Error(`ARTICLE_UPSERT_FAILED_${response.status}`);
+  }
+
+  const rows = (await response.json()) as Array<{ id: string; slug: string }>;
+  const row = rows[0];
+
+  if (!row) {
+    throw new Error("ARTICLE_UPSERT_EMPTY_RESPONSE");
+  }
+
+  await createArticleRevision(row.id, article);
+  return row;
+}
+
+export async function findSupabaseArticleSlug(slug: string) {
+  if (!shouldWriteArticlesToSupabase()) return null;
+
+  const response = await supabaseFetch(
+    `articles?slug=eq.${encodeURIComponent(slug)}&select=slug&limit=1`
+  );
+
+  if (!response.ok) {
+    throw new Error(`ARTICLE_SLUG_FIND_FAILED_${response.status}`);
+  }
+
+  const rows = (await response.json()) as Array<{ slug: string }>;
+  return rows[0]?.slug ?? null;
+}
+
+export async function upsertSupabaseArticleSource(input: {
+  articleSlug: string;
+  sourceUrl: string;
+  sourceTitle?: string;
+  sourceSite?: string;
+  author?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  if (!shouldWriteArticlesToSupabase()) return;
+
+  const articleResponse = await supabaseFetch(
+    `articles?slug=eq.${encodeURIComponent(input.articleSlug)}&select=id&limit=1`
+  );
+
+  if (!articleResponse.ok) {
+    throw new Error(`ARTICLE_SOURCE_ARTICLE_FIND_FAILED_${articleResponse.status}`);
+  }
+
+  const articleRows = (await articleResponse.json()) as Array<{ id: string }>;
+  const articleId = articleRows[0]?.id;
+  if (!articleId) return;
+
+  const response = await supabaseFetch("article_sources?on_conflict=article_id,source_url", {
+    method: "POST",
+    headers: {
+      Prefer: "resolution=merge-duplicates,return=minimal"
+    },
+    body: JSON.stringify({
+      article_id: articleId,
+      source_url: input.sourceUrl,
+      source_title: input.sourceTitle ?? null,
+      source_site: input.sourceSite ?? null,
+      author: input.author ?? null,
+      metadata: input.metadata ?? {}
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`ARTICLE_SOURCE_UPSERT_FAILED_${response.status}`);
+  }
 }

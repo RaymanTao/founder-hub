@@ -311,7 +311,7 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
               className="mt-2 w-full rounded-[1rem] border border-[var(--border)] bg-[rgba(255,255,255,0.82)] px-4 py-3 font-mono text-sm leading-7 outline-none transition focus:border-[var(--accent)]"
             />
             <span className="mt-2 block text-xs leading-6 text-[var(--muted)]">
-              支持 Markdown 标题、列表、引用和代码块。AI 生成初稿会覆盖当前正文，保存后会写回对应的 MDX 文件。
+              支持 Markdown 标题、列表、引用和代码块。AI 生成初稿会覆盖当前正文，保存后会写回当前内容源。
             </span>
           </label>
 

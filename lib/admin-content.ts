@@ -1,6 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
+import {
+  findSupabaseArticleSlug,
+  shouldWriteArticlesToSupabase,
+  upsertSupabaseArticle,
+  upsertSupabaseArticleSource
+} from "@/lib/article-db";
 import { createInterpretationTemplate } from "@/lib/article-template";
 import { ArticleMeta, ArticleType } from "@/types/article";
 
@@ -24,6 +30,14 @@ async function ensureUniqueSlug(base: string) {
   let index = 2;
 
   while (true) {
+    if (shouldWriteArticlesToSupabase()) {
+      const existingSlug = await findSupabaseArticleSlug(slug);
+      if (!existingSlug) return slug;
+      slug = `${safeBase}-${index}`;
+      index += 1;
+      continue;
+    }
+
     try {
       await fs.access(path.join(contentDir, `${slug}.mdx`));
       slug = `${safeBase}-${index}`;
@@ -129,17 +143,46 @@ function extractPageMeta(html: string, url: string) {
 }
 
 async function writeArticle(slug: string, meta: ArticleMeta, body: string) {
+  if (shouldWriteArticlesToSupabase()) {
+    await upsertSupabaseArticle({
+      ...meta,
+      slug,
+      content: body
+    });
+    return;
+  }
+
   const next = matter.stringify(`${body.trim()}\n`, meta);
   await fs.writeFile(path.join(contentDir, `${slug}.mdx`), next, "utf8");
 }
 
 export async function updateArticle(slug: string, update: ArticleMetaUpdate, body: string) {
-  const filePath = path.join(contentDir, `${slug}.mdx`);
   const nextData: ArticleMeta = {
     ...update,
     slug
   };
 
+  if (shouldWriteArticlesToSupabase()) {
+    await upsertSupabaseArticle({
+      ...nextData,
+      content: body
+    });
+    if (nextData.sourceUrl) {
+      await upsertSupabaseArticleSource({
+        articleSlug: slug,
+        sourceUrl: nextData.sourceUrl,
+        sourceTitle: nextData.title,
+        sourceSite: nextData.source,
+        metadata: {
+          importedFrom: "admin-edit",
+          verified: nextData.verified
+        }
+      });
+    }
+    return;
+  }
+
+  const filePath = path.join(contentDir, `${slug}.mdx`);
   const next = matter.stringify(`${body.trim()}\n`, nextData);
   await fs.writeFile(filePath, next, "utf8");
 }
@@ -169,15 +212,13 @@ export async function createBlankArticle(input: {
     tags: []
   };
 
-  await writeArticle(
-    slug,
-    meta,
-    createInterpretationTemplate({
-      title: input.title,
-      source: "Founder Hub",
-      description: input.description
-    })
-  );
+  const body = createInterpretationTemplate({
+    title: input.title,
+    source: "Founder Hub",
+    description: input.description
+  });
+
+  await writeArticle(slug, meta, body);
 
   return slug;
 }
@@ -216,17 +257,32 @@ export async function createArticleFromUrl(url: string) {
     cover: page.image
   };
 
-  await writeArticle(
-    slug,
-    meta,
-    createInterpretationTemplate({
-      title: page.title,
+  const body = createInterpretationTemplate({
+    title: page.title,
+    sourceUrl: page.canonicalUrl,
+    source: page.siteName,
+    author: page.author,
+    description: page.description
+  });
+
+  await writeArticle(slug, meta, body);
+
+  if (shouldWriteArticlesToSupabase()) {
+    await upsertSupabaseArticleSource({
+      articleSlug: slug,
       sourceUrl: page.canonicalUrl,
-      source: page.siteName,
+      sourceTitle: page.title,
+      sourceSite: page.siteName,
       author: page.author,
-      description: page.description
-    })
-  );
+      metadata: {
+        importedFrom: "url",
+        description: page.description,
+        image: page.image,
+        publishedAt: page.publishedAt,
+        keywords: page.keywords
+      }
+    });
+  }
 
   return slug;
 }
