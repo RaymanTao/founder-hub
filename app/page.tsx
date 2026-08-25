@@ -201,7 +201,7 @@ export default async function HomePage() {
     .slice(0, 3);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#faf6ef_0%,#f6f1e9_48%,#f0e8dc_100%)] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
+    <main className="min-h-screen bg-[#faf6ef] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
       <div className="mx-auto w-full max-w-[1156px]">
         <section>
           <p className="flex items-center gap-2 text-[13px] font-medium tracking-[0.08em] text-[#f05a3e]">

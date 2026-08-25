@@ -5,7 +5,7 @@ import { zhCN } from "@/locale/zh-cn";
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-[var(--border)] bg-[rgba(255,252,247,0.72)] backdrop-blur-[8px]">
+    <footer className="mt-20 border-t border-[var(--border)] bg-[#faf6ef]">
       <div className="mx-auto grid max-w-[1120px] gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.2fr_0.9fr_1fr] lg:px-8">
         <div>
           <p className="font-display text-[2rem] leading-none text-[var(--foreground)]">
