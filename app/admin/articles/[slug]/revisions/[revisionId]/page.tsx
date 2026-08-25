@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { restoreArticleRevisionAction } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabaseArticleRevision } from "@/lib/article-db";
 import { renderMarkdown } from "@/lib/markdown";
@@ -9,6 +10,7 @@ import { getArticleBySlug } from "@/lib/writing";
 
 type Props = {
   params: Promise<{ slug: string; revisionId: string }>;
+  searchParams?: Promise<{ error?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -21,10 +23,14 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminArticleRevisionDetailPage({ params }: Props) {
+export default async function AdminArticleRevisionDetailPage({
+  params,
+  searchParams
+}: Props) {
   await requireAdmin();
 
   const { slug, revisionId } = await params;
+  const query = (await searchParams) ?? {};
   const [article, revision] = await Promise.all([
     getArticleBySlug(slug),
     getSupabaseArticleRevision(slug, revisionId)
@@ -53,13 +59,31 @@ export default async function AdminArticleRevisionDetailPage({ params }: Props) 
             {revision.created_by}
           </p>
         </div>
-        <Link
-          href={`/admin/articles/${article.slug}`}
-          className="rounded-full bg-[var(--foreground)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
-        >
-          返回编辑
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <form action={restoreArticleRevisionAction}>
+            <input type="hidden" name="slug" value={article.slug} />
+            <input type="hidden" name="revisionId" value={revision.id} />
+            <button
+              type="submit"
+              className="rounded-full bg-[var(--foreground)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
+            >
+              恢复此版本
+            </button>
+          </form>
+          <Link
+            href={`/admin/articles/${article.slug}`}
+            className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+          >
+            返回编辑
+          </Link>
+        </div>
       </div>
+
+      {query.error ? (
+        <div className="mt-6 rounded-[1rem] border border-[rgba(143,78,69,0.2)] bg-[rgba(143,78,69,0.07)] p-4 text-sm text-[var(--danger)]">
+          恢复失败：版本数据不完整或不合法。
+        </div>
+      ) : null}
 
       <section className="mt-8 rounded-[1.5rem] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-soft)] sm:p-8">
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">

@@ -41,6 +41,8 @@ Each save also creates an `article_revisions` row.
 
 Article revision history is available at `/admin/articles/[slug]/revisions` after
 Supabase article mode is enabled and at least one save has created a revision.
+Revision detail pages can restore a previous version; restoring writes the selected
+version back to the article and creates a new revision record.
 
 Import local MDX articles into Supabase with:
 

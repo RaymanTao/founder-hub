@@ -20,6 +20,7 @@ type Props = {
     imported?: string;
     templated?: string;
     aiDraft?: string;
+    restored?: string;
     error?: string;
   }>;
 };
@@ -201,6 +202,12 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
       {query.aiDraft ? (
         <div className="mt-6 rounded-[1rem] border border-[rgba(74,106,84,0.2)] bg-[rgba(74,106,84,0.08)] p-4 text-sm leading-6 text-[var(--success)]">
           已生成 AI 解读初稿，并保持为草稿状态。请核对事实后再发布。
+        </div>
+      ) : null}
+
+      {query.restored ? (
+        <div className="mt-6 rounded-[1rem] border border-[rgba(74,106,84,0.2)] bg-[rgba(74,106,84,0.08)] p-4 text-sm leading-6 text-[var(--success)]">
+          已恢复到所选版本，并生成新的版本记录。
         </div>
       ) : null}
 

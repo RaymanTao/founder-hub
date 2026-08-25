@@ -15,6 +15,7 @@ import {
   createBlankArticle,
   updateArticle
 } from "@/lib/admin-content";
+import { getSupabaseArticleRevision } from "@/lib/article-db";
 import {
   createResource,
   setResourceArchived,
@@ -365,4 +366,87 @@ export async function generateArticleDraftAction(formData: FormData) {
   );
 
   redirect(`/admin/articles/${slug}?aiDraft=1`);
+}
+
+function getRevisionString(
+  meta: Record<string, unknown>,
+  key: string,
+  fallback?: string
+) {
+  const value = meta[key];
+  return typeof value === "string" ? value : fallback ?? "";
+}
+
+function getRevisionBoolean(meta: Record<string, unknown>, key: string, fallback = false) {
+  const value = meta[key];
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function getRevisionNumber(meta: Record<string, unknown>, key: string, fallback = 0) {
+  const value = meta[key];
+  return typeof value === "number" ? value : fallback;
+}
+
+function getRevisionTags(meta: Record<string, unknown>, fallback: string[]) {
+  const value = meta.tags;
+  return Array.isArray(value) ? value.map(String).filter(Boolean) : fallback;
+}
+
+export async function restoreArticleRevisionAction(formData: FormData) {
+  await requireAdmin();
+
+  const slug = requireString(formData, "slug");
+  const revisionId = requireString(formData, "revisionId");
+  const article = await getArticleBySlug(slug);
+  const revision = await getSupabaseArticleRevision(slug, revisionId);
+
+  if (!slug || !revisionId || !article || !revision) {
+    redirect(`/admin/articles/${slug || ""}?error=revision-not-found`);
+  }
+
+  const category = getRevisionString(
+    revision.meta,
+    "category",
+    article.category
+  ) as ArticleCategory;
+  const type = getRevisionString(revision.meta, "type", article.type) as ArticleType;
+  const access = getRevisionString(
+    revision.meta,
+    "access",
+    article.access
+  ) as ArticleAccess;
+
+  if (
+    !categoryValues.includes(category) ||
+    !typeValues.includes(type) ||
+    !accessValues.includes(access)
+  ) {
+    redirect(`/admin/articles/${slug}/revisions/${revisionId}?error=invalid-revision`);
+  }
+
+  await updateArticle(
+    slug,
+    {
+      title: revision.title,
+      description: revision.description,
+      date: getRevisionString(revision.meta, "date", article.date),
+      category,
+      type,
+      readingTime: getRevisionString(revision.meta, "readingTime", article.readingTime),
+      featured: getRevisionBoolean(revision.meta, "featured", article.featured),
+      published: getRevisionBoolean(revision.meta, "published", article.published),
+      archived: getRevisionBoolean(revision.meta, "archived", article.archived),
+      number: getRevisionNumber(revision.meta, "number", article.number),
+      source: getRevisionString(revision.meta, "source", article.source),
+      sourceUrl: getRevisionString(revision.meta, "sourceUrl", article.sourceUrl),
+      verified: getRevisionBoolean(revision.meta, "verified", article.verified),
+      access,
+      tags: getRevisionTags(revision.meta, article.tags),
+      audioUrl: getRevisionString(revision.meta, "audioUrl", article.audioUrl),
+      cover: getRevisionString(revision.meta, "cover", article.cover)
+    },
+    revision.body
+  );
+
+  redirect(`/admin/articles/${slug}?restored=1`);
 }
