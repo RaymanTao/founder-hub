@@ -70,6 +70,24 @@ npm run import:resources
 
 The resource import script upserts by `id`, so it is safe to rerun.
 
+## RSS Aggregation
+
+RSS feed sources are configured in `data/rss-feeds.json`. Feed entries are disabled by
+default. Add a feed URL and set `enabled` to `true`, then preview with:
+
+```bash
+npm run import:rss -- --dry-run
+```
+
+Import enabled feed items as unpublished local article drafts with:
+
+```bash
+npm run import:rss
+```
+
+Each imported item is saved under `content/writing/` with source metadata, tags, and a
+starter interpretation template. Review and publish from the admin editor.
+
 ## Cloudflare R2
 
 Set these environment variables in production:

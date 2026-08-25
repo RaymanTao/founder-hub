@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/cards/article-card";
-import { HomeHero } from "@/components/sections/home-hero";
+import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Section } from "@/components/ui/section";
 import { products } from "@/data/products";
@@ -10,8 +10,21 @@ import { getAllArticles } from "@/lib/writing";
 
 export const metadata = createMetadata({
   title: "首页",
-  description: "Founder Hub 是面向 AI 创业者的一人公司内容库、资源中心和产品实验室。"
+  description: "Founder Hub 聚合创业、一人公司、融资和案例资讯，面向 AI 创业者提供可信内容和资源。"
 });
+
+const topicTabs = ["创业", "一人公司", "融资", "案例", "AI 产品", "增长"] as const;
+
+function getTopicArticles(articles: Awaited<ReturnType<typeof getAllArticles>>, keyword: string) {
+  return articles
+    .filter((article) =>
+      [article.title, article.description, article.category, article.type, ...article.tags]
+        .join(" ")
+        .toLowerCase()
+        .includes(keyword.toLowerCase())
+    )
+    .slice(0, 4);
+}
 
 export default async function HomePage() {
   const [articles, resources] = await Promise.all([
@@ -21,79 +34,167 @@ export default async function HomePage() {
   const featuredArticle = articles.find((item) => item.featured) ?? articles[0];
   const latestArticles = articles
     .filter((item) => item.slug !== featuredArticle?.slug)
-    .slice(0, 3);
+    .slice(0, 8);
   const featuredResources = resources.filter((item) => item.featured).slice(0, 2);
   const featuredProducts = products.filter((item) => item.featured).slice(0, 3);
+  const fundingArticles = getTopicArticles(articles, "融资");
+  const caseArticles = getTopicArticles(articles, "案例");
+  const solopreneurArticles = getTopicArticles(articles, "一人公司");
 
   return (
     <>
-      <HomeHero />
-
-      {featuredArticle ? (
-        <Section className="py-10 sm:py-12">
-          <div className="flex items-end justify-between gap-4">
+      <Section className="pb-8 pt-12 sm:pb-10 sm:pt-16">
+        <div className="border-b border-[var(--border)] pb-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--accent)]">
+            Founder Intelligence
+          </p>
+          <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
-                Featured
+              <h1 className="max-w-4xl text-5xl font-semibold leading-[1.02] tracking-tight text-[var(--foreground)] sm:text-6xl">
+                给 AI 创业者看的创业、融资与案例资讯
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--secondary)]">
+                聚合创业公司、一人公司、融资动态、产品案例和 AI 工具资讯，再沉淀成可执行的分析、资源和方法论。
               </p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-                本周重点文章
-              </h2>
             </div>
-            <ButtonLink href="/writing" variant="ghost">
-              进入内容库
-            </ButtonLink>
+            <div className="rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-5">
+              <p className="text-sm font-semibold text-[var(--foreground)]">
+                订阅每周创业情报
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--secondary)]">
+                收到值得跟进的融资、案例、AI 产品和一人公司方法。
+              </p>
+              <div className="mt-4">
+                <NewsletterForm source="home-intelligence" compact />
+              </div>
+            </div>
           </div>
+          <div className="mt-7 flex flex-wrap gap-2">
+            {topicTabs.map((topic) => (
+              <Link
+                key={topic}
+                href={`/writing?q=${encodeURIComponent(topic)}`}
+                className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.58)] px-3 py-1.5 text-xs font-medium text-[var(--secondary)] transition hover:border-[var(--accent)] hover:text-[var(--foreground)]"
+              >
+                {topic}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </Section>
 
-          <Link
-            href={`/writing/${featuredArticle.slug}`}
-            className="mt-7 block rounded-[1.5rem] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:border-[rgba(138,106,82,0.32)] sm:p-8"
-          >
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-              <span>№ {String(featuredArticle.number).padStart(3, "0")}</span>
-              <span>/</span>
-              <span>{featuredArticle.category}</span>
-              <span>/</span>
-              <span>{featuredArticle.access === "Free" ? "免费" : "深度"}</span>
-              {featuredArticle.verified ? <span>已核对</span> : null}
+      <Section className="py-8 sm:py-10">
+        <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+          {featuredArticle ? (
+            <Link
+              href={`/writing/${featuredArticle.slug}`}
+              className="block rounded-[1.5rem] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:border-[rgba(138,106,82,0.32)] sm:p-8"
+            >
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+                <span>今日精选</span>
+                <span>/</span>
+                <span>{featuredArticle.category}</span>
+                <span>/</span>
+                <span>{featuredArticle.source}</span>
+              </div>
+              <h2 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight tracking-tight text-[var(--foreground)] sm:text-5xl">
+                {featuredArticle.title}
+              </h2>
+              <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--secondary)]">
+                {featuredArticle.description}
+              </p>
+              <div className="mt-7 flex flex-wrap items-center gap-2">
+                {featuredArticle.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-[rgba(138,106,82,0.14)] bg-[rgba(255,255,255,0.56)] px-3 py-1 text-xs text-[var(--secondary)]"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </Link>
+          ) : null}
+
+          <aside className="rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-5">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+                最新情报
+              </h2>
+              <Link
+                href="/writing"
+                className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
+              >
+                全部
+              </Link>
             </div>
-            <h3 className="mt-5 max-w-4xl text-3xl font-semibold leading-tight tracking-tight text-[var(--foreground)] sm:text-4xl">
-              {featuredArticle.title}
-            </h3>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--secondary)]">
-              {featuredArticle.description}
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-2">
-              {featuredArticle.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-[rgba(138,106,82,0.14)] bg-[rgba(255,255,255,0.56)] px-3 py-1 text-xs text-[var(--secondary)]"
+            <div className="mt-5 grid gap-4">
+              {latestArticles.slice(0, 5).map((article) => (
+                <Link
+                  key={article.slug}
+                  href={`/writing/${article.slug}`}
+                  className="border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0"
                 >
-                  #{tag}
-                </span>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+                    {article.category} / {article.source}
+                  </p>
+                  <h3 className="mt-1 text-sm font-semibold leading-6 text-[var(--foreground)]">
+                    {article.title}
+                  </h3>
+                </Link>
               ))}
             </div>
-          </Link>
-        </Section>
-      ) : null}
-
-      <Section className="py-10 sm:py-12">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
-              Latest
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-              最新文章
-            </h2>
-          </div>
-          <ButtonLink href="/writing" variant="ghost">
-            查看全部
-          </ButtonLink>
+          </aside>
         </div>
-        <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {latestArticles.map((article) => (
-            <ArticleCard key={article.slug} article={article} />
+      </Section>
+
+      <Section className="py-8 sm:py-10">
+        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+          {[
+            ["融资动态", fundingArticles],
+            ["案例拆解", caseArticles.length ? caseArticles : latestArticles.slice(0, 4)],
+            ["一人公司", solopreneurArticles.length ? solopreneurArticles : latestArticles.slice(0, 4)]
+          ].map(([title, items]) => (
+            <div
+              key={String(title)}
+              className="rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-5"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+                  {String(title)}
+                </h2>
+                <Link
+                  href={`/writing?q=${encodeURIComponent(String(title).replace("动态", "").replace("拆解", ""))}`}
+                  className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
+                >
+                  更多
+                </Link>
+              </div>
+              <div className="mt-5 grid gap-4">
+                {(items as typeof latestArticles).map((article) => (
+                  <Link
+                    key={article.slug}
+                    href={`/writing/${article.slug}`}
+                    className="grid gap-2 border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+                      {article.source} / {article.type}
+                    </p>
+                    <h3 className="text-base font-semibold leading-7 text-[var(--foreground)]">
+                      {article.title}
+                    </h3>
+                    <p className="text-sm leading-6 text-[var(--secondary)]">
+                      {article.description}
+                    </p>
+                  </Link>
+                ))}
+                {!(items as typeof latestArticles).length ? (
+                  <p className="text-sm text-[var(--secondary)]">
+                    RSS 聚合开启后，这里会自动出现相关资讯。
+                  </p>
+                ) : null}
+              </div>
+            </div>
           ))}
         </div>
       </Section>
@@ -139,7 +240,28 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      <Section className="pt-10 sm:pt-12">
+      <Section className="py-10 sm:py-12">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
+              Analysis
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+              最新分析
+            </h2>
+          </div>
+          <ButtonLink href="/writing" variant="ghost">
+            查看全部
+          </ButtonLink>
+        </div>
+        <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {latestArticles.slice(0, 6).map((article) => (
+            <ArticleCard key={article.slug} article={article} />
+          ))}
+        </div>
+      </Section>
+
+      <Section className="pt-8 sm:pt-10">
         <div className="rounded-[1.5rem] border border-[var(--border)] bg-[rgba(255,252,247,0.76)] p-7 shadow-[var(--shadow-soft)] backdrop-blur-[8px] sm:p-8">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
             Products & Services

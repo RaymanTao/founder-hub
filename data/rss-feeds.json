@@ -1,0 +1,29 @@
+[
+  {
+    "id": "startup-news",
+    "title": "创业资讯",
+    "url": "",
+    "category": "Build",
+    "type": "Founder Analysis",
+    "tags": ["创业", "资讯"],
+    "enabled": false
+  },
+  {
+    "id": "funding-news",
+    "title": "融资动态",
+    "url": "",
+    "category": "Growth",
+    "type": "Founder Analysis",
+    "tags": ["融资", "创业公司"],
+    "enabled": false
+  },
+  {
+    "id": "case-studies",
+    "title": "案例资讯",
+    "url": "",
+    "category": "Solopreneur",
+    "type": "Case Study",
+    "tags": ["案例", "商业模式"],
+    "enabled": false
+  }
+]
