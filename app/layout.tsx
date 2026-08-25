@@ -41,7 +41,7 @@ export default function RootLayout({
         className={`${manrope.variable} ${cormorant.variable} ${notoSansSC.variable} font-[var(--font-sans)] antialiased`}
       >
         <Navbar />
-        <main>{children}</main>
+        <main className="bg-[#F3ECE2]">{children}</main>
         <Footer />
       </body>
     </html>
