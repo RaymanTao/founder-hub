@@ -201,7 +201,7 @@ export default async function HomePage() {
     .slice(0, 3);
 
   return (
-    <main className="min-h-screen bg-[#faf6ef] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
+    <main className="min-h-screen bg-[#F3ECE2] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
       <div className="mx-auto w-full max-w-[1156px]">
         <section>
           <h1 className="font-[var(--font-cjk)] text-[44px] font-black leading-none tracking-normal sm:text-[56px]">
