@@ -6,43 +6,26 @@ type ChatMessage = {
 };
 
 type ProviderConfig = {
-  provider: "deepseek" | "openai";
   baseUrl: string;
   apiKey: string;
   model: string;
 };
 
 function getProviderConfig(): ProviderConfig {
-  const provider = (process.env.AI_PROVIDER ?? "deepseek").toLowerCase();
-
-  if (provider === "deepseek") {
-    return {
-      provider: "deepseek",
-      baseUrl: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-      apiKey: process.env.DEEPSEEK_API_KEY ?? "",
-      model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash"
-    };
-  }
-
-  if (provider === "openai") {
-    return {
-      provider: "openai",
-      baseUrl: process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
-      apiKey: process.env.OPENAI_API_KEY ?? "",
-      model: process.env.OPENAI_MODEL ?? ""
-    };
-  }
-
-  throw new Error("UNSUPPORTED_AI_PROVIDER");
+  return {
+    baseUrl: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
+    apiKey: process.env.DEEPSEEK_API_KEY ?? "",
+    model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash"
+  };
 }
 
 function assertConfigured(config: ProviderConfig) {
   if (!config.apiKey) {
-    throw new Error(`MISSING_${config.provider.toUpperCase()}_API_KEY`);
+    throw new Error("MISSING_DEEPSEEK_API_KEY");
   }
 
   if (!config.model) {
-    throw new Error(`MISSING_${config.provider.toUpperCase()}_MODEL`);
+    throw new Error("MISSING_DEEPSEEK_MODEL");
   }
 }
 
