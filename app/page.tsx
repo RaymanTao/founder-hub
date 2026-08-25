@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { NewsletterForm } from "@/components/forms/newsletter-form";
-import { Section } from "@/components/ui/section";
 import { createMetadata } from "@/lib/seo";
 import { formatDate } from "@/lib/utils";
 import { getAllArticles } from "@/lib/writing";
@@ -11,31 +9,186 @@ export const metadata = createMetadata({
   description: "Founder Hub 聚合创业、一人公司、融资和案例资讯，面向 AI 创业者提供可信内容和资源。"
 });
 
-const topics = ["全部", "创业", "公司", "融资", "案例", "AI", "增长"];
+const sourceLine = "已核对来源 · 讲透不注水 · 中英日同步更新";
+const coverThemes = [
+  "bg-[#887fc7]",
+  "bg-[#eff7f1]",
+  "bg-[#30081d]",
+  "bg-[#19362f]",
+  "bg-[#eee2d3]",
+  "bg-[#171311]"
+];
 
-function ArticleMetaLine({ article }: { article: ArticleMeta }) {
+function formatNumber(number: number) {
+  return `№ ${String(number || 1).padStart(4, "0")}`;
+}
+
+function MembershipBadge() {
   return (
-    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-      <span>{formatDate(article.date)}</span>
-      <span>/</span>
-      <span>{article.category}</span>
-      <span>/</span>
-      <span>{article.source}</span>
+    <span className="inline-flex items-center rounded-[5px] border border-white/15 bg-[#211b1c] px-2 py-1 text-[11px] font-semibold text-white shadow-sm">
+      🔒 会员
+    </span>
+  );
+}
+
+function StatusPill({
+  children,
+  tone = "dark"
+}: {
+  children: string;
+  tone?: "dark" | "green";
+}) {
+  return (
+    <span
+      className={
+        tone === "green"
+          ? "inline-flex items-center rounded-full border border-[#81b99c]/45 bg-[#dbf3e4] px-3 py-1 text-xs font-semibold text-[#18724a]"
+          : "inline-flex items-center rounded-full border border-white/24 bg-white/12 px-3 py-1 text-xs font-semibold text-white"
+      }
+    >
+      {children}
+    </span>
+  );
+}
+
+function ArticleFooter({ article }: { article: ArticleMeta }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#8b8178]">
+      <div className="flex flex-wrap gap-2">
+        {article.tags.slice(0, 2).map((tag) => (
+          <span
+            key={tag}
+            className="rounded-[6px] border border-[#ded2c3] bg-[#fbf8f2] px-2.5 py-1 leading-none"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+      <span>
+        {formatDate(article.date)} · {article.readingTime}
+      </span>
     </div>
   );
 }
 
-function CompactArticleRow({ article }: { article: ArticleMeta }) {
+function CoverArt({
+  article,
+  index
+}: {
+  article: ArticleMeta;
+  index: number;
+}) {
+  if (article.cover) {
+    return (
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${article.cover})` }}
+      />
+    );
+  }
+
+  if (index % 3 === 0) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-[#8b82c9]">
+        <div className="relative h-24 w-32">
+          <div className="absolute left-0 top-2 h-20 w-16 rotate-[-1deg] border-[5px] border-[#211b28] bg-[#faf8f1]" />
+          <div className="absolute right-0 top-2 h-20 w-16 rotate-[1deg] border-[5px] border-[#211b28] bg-[#faf8f1]" />
+          <div className="absolute left-1/2 top-0 h-24 w-[5px] -translate-x-1/2 bg-[#211b28]" />
+          <div className="absolute bottom-[-28px] left-7 h-14 w-20 border-b-[5px] border-l-[5px] border-r-[5px] border-[#211b28]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (index % 3 === 1) {
+    return (
+      <div className="absolute inset-0 overflow-hidden bg-[#edf6ef]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(34,119,78,0.16)_1px,transparent_0)] bg-[length:14px_14px]" />
+        <div className="absolute bottom-7 left-4 text-5xl font-black tracking-[0.08em] text-[#b9d8ca]">
+          DEEP DIVE
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[#12020b]">
+      <div className="absolute -right-16 top-8 h-28 w-[130%] rotate-[-12deg] bg-[linear-gradient(90deg,transparent,rgba(239,61,43,0.3),rgba(84,174,255,0.58),rgba(255,255,255,0.82),rgba(236,46,78,0.56),transparent)] blur-[2px]" />
+      <div className="absolute -right-20 top-16 h-20 w-[120%] rotate-[-8deg] bg-[linear-gradient(90deg,transparent,rgba(255,22,91,0.62),rgba(255,174,205,0.86),transparent)] blur-[7px]" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-black" />
+    </div>
+  );
+}
+
+function FeaturedCard({ article }: { article: ArticleMeta }) {
   return (
     <Link
       href={`/writing/${article.slug}`}
-      className="grid gap-2 border-b border-[var(--border)] py-5 transition last:border-b-0 hover:text-[var(--accent-strong)]"
+      className="relative block overflow-hidden rounded-[18px] bg-[#14251f] px-9 py-10 text-white shadow-[0_22px_42px_rgba(23,19,17,0.18)] transition hover:-translate-y-0.5 sm:px-10 sm:py-10"
     >
-      <ArticleMetaLine article={article} />
-      <h3 className="text-xl font-semibold leading-8 tracking-tight text-[var(--foreground)]">
+      <div className="absolute right-8 top-5 hidden text-[72px] font-black tracking-[0.08em] text-white/7 sm:block">
+        DEEP DIVE
+      </div>
+      <div className="relative z-10 flex flex-wrap items-center gap-2 text-sm text-white/66">
+        <StatusPill>{article.access === "Deep Dive" ? "深度" : "快讯"}</StatusPill>
+        {article.verified ? <span className="font-semibold text-[#bce7cf]">✓ 已核对</span> : null}
+        <StatusPill tone="green">{article.access === "Deep Dive" ? "会员" : "免费"}</StatusPill>
+        <span>{formatNumber(article.number)} · {article.source}</span>
+      </div>
+      <h2 className="relative z-10 mt-5 max-w-3xl font-[var(--font-cjk)] text-3xl font-black leading-tight tracking-normal text-white sm:text-4xl lg:text-[40px]">
         {article.title}
-      </h3>
-      <p className="text-sm leading-7 text-[var(--secondary)]">{article.description}</p>
+      </h2>
+      <p className="relative z-10 mt-4 max-w-2xl text-base font-semibold leading-7 text-white/74">
+        {article.description}
+      </p>
+      <p className="relative z-10 mt-5 text-sm text-white/55">
+        {formatDate(article.date)} · {article.readingTime}
+      </p>
+    </Link>
+  );
+}
+
+function ArticleCard({
+  article,
+  index
+}: {
+  article: ArticleMeta;
+  index: number;
+}) {
+  return (
+    <Link
+      href={`/writing/${article.slug}`}
+      className="group overflow-hidden rounded-[14px] border border-[#e0d4c5] bg-[#fffdf8] shadow-[0_16px_34px_rgba(23,19,17,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(23,19,17,0.12)]"
+    >
+      <div className={`relative h-52 ${coverThemes[index % coverThemes.length]}`}>
+        <CoverArt article={article} index={index} />
+        <div className="absolute left-4 top-4 flex items-center gap-2">
+          {article.access === "Deep Dive" ? (
+            <span className="flex items-center gap-1 text-xs font-semibold text-[#18724a]">
+              <span className="h-2 w-2 rounded-[2px] bg-[#18724a]" />
+              深度
+            </span>
+          ) : null}
+        </div>
+        <div className="absolute right-3 top-3">
+          <MembershipBadge />
+        </div>
+        <span className="absolute right-4 top-10 text-[11px] text-[#8b8178]">
+          {formatNumber(article.number)}
+        </span>
+      </div>
+
+      <div className="grid min-h-[216px] gap-4 p-5">
+        <div>
+          <h3 className="font-[var(--font-cjk)] text-[19px] font-black leading-7 tracking-normal text-[#1d1815]">
+            {article.title}
+          </h3>
+          <p className="mt-3 line-clamp-3 text-[15px] leading-7 text-[#635b52]">
+            {article.description}
+          </p>
+        </div>
+        <ArticleFooter article={article} />
+      </div>
     </Link>
   );
 }
@@ -45,120 +198,57 @@ export default async function HomePage() {
   const featuredArticle = articles.find((item) => item.featured) ?? articles[0];
   const latestArticles = articles
     .filter((item) => item.slug !== featuredArticle?.slug)
-    .slice(0, 7);
+    .slice(0, 3);
 
   return (
-    <>
-      <Section className="pb-7 pt-14 sm:pb-8 sm:pt-20">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--accent)]">
-            Founder Hub
+    <main className="min-h-screen bg-[#f6f1e9] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
+      <div className="mx-auto w-full max-w-[1156px]">
+        <section>
+          <p className="flex items-center gap-2 text-[13px] font-medium tracking-[0.08em] text-[#f05a3e]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#f28d78]" />
+            AI 信息侦查员 · 每日更新
           </p>
-          <h1 className="mt-5 text-5xl font-semibold leading-tight tracking-tight text-[var(--foreground)] sm:text-7xl">
-            创业情报，讲到你懂
+          <h1 className="mt-5 font-[var(--font-cjk)] text-[44px] font-black leading-none tracking-normal sm:text-[56px]">
+            AI 精华，<span className="text-[#ee4f34]">讲到你懂</span>。
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[var(--secondary)]">
-            聚合创业公司、一人公司、融资、案例和 AI 产品资讯，筛掉噪音，只留下创始人值得跟进的线索。
+          <p className="mt-5 text-[15px] leading-6 tracking-[0.1em] text-[#7b7167]">
+            {sourceLine}
           </p>
-        </div>
+        </section>
 
-        <div className="mx-auto mt-8 flex max-w-3xl flex-wrap justify-center gap-2">
-          {topics.map((topic) => (
-            <Link
-              key={topic}
-              href={topic === "全部" ? "/writing" : `/writing?q=${encodeURIComponent(topic)}`}
-              className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.64)] px-4 py-2 text-sm font-medium text-[var(--secondary)] transition hover:border-[var(--accent)] hover:text-[var(--foreground)]"
-            >
-              {topic}
-            </Link>
-          ))}
-        </div>
-      </Section>
-
-      <Section className="py-7 sm:py-8">
-        <div className="grid gap-10 border-y border-[var(--border)] py-8 lg:grid-cols-[1.08fr_0.92fr]">
-          <div>
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-                今日精选
-              </h2>
-              <Link
-                href="/writing"
-                className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-              >
-                查看全部
-              </Link>
-            </div>
-
-            {featuredArticle ? (
-              <Link
-                href={`/writing/${featuredArticle.slug}`}
-                className="mt-6 block transition hover:text-[var(--accent-strong)]"
-              >
-                <ArticleMetaLine article={featuredArticle} />
-                <h3 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-[var(--foreground)] sm:text-5xl">
-                  {featuredArticle.title}
-                </h3>
-                <p className="mt-5 text-base leading-8 text-[var(--secondary)]">
-                  {featuredArticle.description}
-                </p>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {featuredArticle.tags.slice(0, 5).map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-[rgba(138,106,82,0.14)] bg-[rgba(255,255,255,0.56)] px-3 py-1 text-xs text-[var(--secondary)]"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </Link>
-            ) : (
-              <p className="mt-6 text-sm text-[var(--secondary)]">
-                暂时还没有内容。RSS 聚合开启后，这里会显示今日精选。
-              </p>
-            )}
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-                最新解读
-              </h2>
-              <Link
-                href="/writing"
-                className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-              >
-                内容库
-              </Link>
-            </div>
-            <div className="mt-3">
-              {latestArticles.map((article) => (
-                <CompactArticleRow key={article.slug} article={article} />
-              ))}
-              {!latestArticles.length ? (
-                <p className="py-5 text-sm text-[var(--secondary)]">
-                  暂时还没有最新解读。
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      <Section className="pb-16 pt-8 sm:pb-20">
-        <div className="mx-auto max-w-2xl border-t border-[var(--border)] pt-8 text-center">
-          <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-            订阅创业情报
+        <section className="mt-8">
+          <h2 className="mb-4 text-[15px] font-semibold tracking-[0.18em] text-[#746a60]">
+            今日精选
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--secondary)]">
-            每周整理值得关注的融资、案例、产品和一人公司方法，发给真正需要做判断的人。
-          </p>
-          <div className="mx-auto mt-5 max-w-lg">
-            <NewsletterForm source="home-intelligence" />
+          {featuredArticle ? (
+            <FeaturedCard article={featuredArticle} />
+          ) : (
+            <div className="rounded-[18px] bg-[#14251f] px-9 py-10 text-white">
+              RSS 聚合开启后，这里会显示今日精选。
+            </div>
+          )}
+        </section>
+
+        <section className="mt-10">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <h2 className="text-[15px] font-semibold tracking-[0.18em] text-[#746a60]">
+              最新解读
+            </h2>
+            <Link
+              href="/writing"
+              className="text-sm font-semibold text-[#f05a3e] transition hover:text-[#c93924]"
+            >
+              全部 →
+            </Link>
           </div>
-        </div>
-      </Section>
-    </>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {latestArticles.map((article, index) => (
+              <ArticleCard key={article.slug} article={article} index={index} />
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }

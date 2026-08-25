@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button-link";
 import { navigation } from "@/data/site";
 
 export function Navbar() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [readerEmail, setReaderEmail] = useState<string | null>(null);
 
@@ -15,6 +17,8 @@ export function Navbar() {
       .then((data: { email: string | null }) => setReaderEmail(data.email))
       .catch(() => setReaderEmail(null));
   }, []);
+
+  if (pathname === "/") return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[rgba(250,246,239,0.82)] backdrop-blur-[10px]">
