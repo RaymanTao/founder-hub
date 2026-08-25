@@ -204,11 +204,7 @@ export default async function HomePage() {
     <main className="min-h-screen bg-[#faf6ef] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
       <div className="mx-auto w-full max-w-[1156px]">
         <section>
-          <p className="flex items-center gap-2 text-[13px] font-medium tracking-[0.08em] text-[#f05a3e]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#f28d78]" />
-            AI 信息侦查员 · 每日更新
-          </p>
-          <h1 className="mt-5 font-[var(--font-cjk)] text-[44px] font-black leading-none tracking-normal sm:text-[56px]">
+          <h1 className="font-[var(--font-cjk)] text-[44px] font-black leading-none tracking-normal sm:text-[56px]">
             AI 精华，<span className="text-[#ee4f34]">讲到你懂</span>。
           </h1>
           <p className="mt-5 text-[15px] leading-6 tracking-[0.1em] text-[#7b7167]">
