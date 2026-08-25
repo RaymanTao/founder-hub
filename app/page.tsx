@@ -205,7 +205,7 @@ export default async function HomePage() {
       <div className="mx-auto w-full max-w-[1156px]">
         <section>
           <h1 className="font-[var(--font-cjk)] text-[44px] font-black leading-none tracking-normal sm:text-[56px]">
-            AI 精华，<span className="text-[#ee4f34]">讲到你懂</span>。
+            创业情报，<span className="text-[#ee4f34]">讲到你懂</span>。
           </h1>
           <p className="mt-5 text-[15px] leading-6 tracking-[0.1em] text-[#7b7167]">
             {sourceLine}
