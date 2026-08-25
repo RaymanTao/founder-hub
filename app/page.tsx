@@ -9,7 +9,7 @@ export const metadata = createMetadata({
   description: "Founder Hub 聚合创业、一人公司、融资和案例资讯，面向 AI 创业者提供可信内容和资源。"
 });
 
-const sourceLine = "已核对来源 · 讲透不注水 · 中英日同步更新";
+const sourceLine = "聚合创业公司 · 一人公司 · 融资动态 · 案例拆解 · AI 产品资讯";
 const coverThemes = [
   "bg-[#887fc7]",
   "bg-[#eff7f1]",
@@ -201,7 +201,7 @@ export default async function HomePage() {
     .slice(0, 3);
 
   return (
-    <main className="min-h-screen bg-[#f6f1e9] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#faf6ef_0%,#f6f1e9_48%,#f0e8dc_100%)] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
       <div className="mx-auto w-full max-w-[1156px]">
         <section>
           <p className="flex items-center gap-2 text-[13px] font-medium tracking-[0.08em] text-[#f05a3e]">
