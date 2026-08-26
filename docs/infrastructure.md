@@ -105,10 +105,9 @@ Admins can also run AI screening for a single candidate from `/admin/rss`.
 
 ### Scheduled imports
 
-The repository includes a GitHub Actions workflow at
-`.github/workflows/rss-import.yml`. It runs every day at 09:17 China Standard Time
-and can also be started manually from the Actions page. The workflow is intentionally
-read-only against the repository: it only writes candidates through the Supabase API.
+Production deployments use Vercel Cron through `/api/cron/rss-import`. It runs every
+day at 09:17 China Standard Time. Vercel Cron schedules use UTC, so the configured
+schedule is `17 1 * * *`. Cron jobs run only on production deployments.
 
 Add these GitHub repository secrets before enabling the workflow:
 
@@ -123,11 +122,17 @@ These are optional and use the application defaults when omitted:
 ```text
 DEEPSEEK_BASE_URL
 DEEPSEEK_MODEL
+CRON_SECRET
 ```
 
 The scheduled job imports at most five items per enabled feed. A manual run can set a
 different per-feed limit. If no feed in `data/rss-feeds.json` has both `enabled: true`
 and a URL, the job exits successfully without importing anything.
+
+`CRON_SECRET` should be a random string of at least 16 characters. The endpoint only
+accepts requests carrying `Authorization: Bearer <CRON_SECRET>`.
+
+The previous GitHub Actions workflow remains available as a backup/manual import path.
 
 For local-only fallback, import enabled feed items as unpublished MDX drafts with:
 
