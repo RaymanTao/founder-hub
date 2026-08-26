@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import type { ArticleMeta } from "@/types/article";
@@ -61,7 +62,7 @@ export function SearchOverlay({ mobile = false }: { mobile?: boolean }) {
         <SearchIcon />
       </button>
 
-      {open ? (
+      {open && typeof document !== "undefined" ? createPortal(
         <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-10 backdrop-blur-[3px] sm:py-16" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
           <section role="dialog" aria-modal="true" aria-label="全站搜索" className="w-full max-w-3xl rounded-[1.25rem] border border-white/20 bg-[#F3ECE2] p-5 shadow-2xl sm:p-8">
             <div className="flex items-start justify-between gap-4">
@@ -78,7 +79,8 @@ export function SearchOverlay({ mobile = false }: { mobile?: boolean }) {
             {query.trim() && !loading && !error && !results.length ? <div className="mt-6 rounded-xl border border-dashed border-[var(--border)] p-5 text-sm text-[var(--secondary)]">没有找到匹配内容，换个关键词再试试。</div> : null}
             <div className="mt-7 flex items-center justify-between text-xs text-[var(--muted)]"><span>按 Esc 关闭</span><Link href="/search" onClick={() => setOpen(false)} className="text-[var(--accent)]">打开完整搜索页 →</Link></div>
           </section>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );
