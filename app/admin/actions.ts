@@ -12,6 +12,7 @@ import {
 } from "@/lib/admin-auth";
 import {
   createArticleFromUrl,
+  createArticleFromRssCandidate,
   createBlankArticle,
   updateArticle
 } from "@/lib/admin-content";
@@ -21,9 +22,14 @@ import {
   setResourceArchived,
   updateResource
 } from "@/lib/admin-resources";
+import {
+  getRssCandidateById,
+  updateRssCandidateStatus
+} from "@/lib/rss-items";
 import { getArticleBySlug } from "@/lib/writing";
 import type { ArticleAccess, ArticleCategory, ArticleType } from "@/types/article";
 import type { Resource } from "@/types/resource";
+import type { RssItemStatus } from "@/types/rss";
 
 const categoryValues: ArticleCategory[] = ["Build", "AI", "Growth", "Solopreneur"];
 const typeValues: ArticleType[] = [
@@ -43,6 +49,7 @@ const resourceCategoryValues: Resource["category"][] = [
   "Checklist"
 ];
 const resourceStatusValues: Resource["status"][] = ["Free", "Coming Soon"];
+const rssStatusValues: RssItemStatus[] = ["pending", "selected", "rejected", "imported"];
 
 function requireString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -168,6 +175,49 @@ export async function importArticleFromUrl(formData: FormData) {
   }
 
   redirect(`/admin/articles/${slug}?imported=1`);
+}
+
+export async function setRssCandidateStatusAction(formData: FormData) {
+  await requireAdmin();
+
+  const id = requireString(formData, "id");
+  const status = requireString(formData, "status") as RssItemStatus;
+  const returnTo = requireString(formData, "returnTo") || "/admin/rss";
+
+  if (!id || !rssStatusValues.includes(status)) {
+    redirect("/admin/rss?error=invalid-rss-status");
+  }
+
+  await updateRssCandidateStatus(id, { status });
+  redirect(returnTo);
+}
+
+export async function createArticleFromRssCandidateAction(formData: FormData) {
+  await requireAdmin();
+
+  const id = requireString(formData, "id");
+  if (!id) {
+    redirect("/admin/rss?error=invalid-rss-item");
+  }
+
+  const candidate = await getRssCandidateById(id);
+  if (!candidate) {
+    redirect("/admin/rss?error=rss-item-not-found");
+  }
+
+  let slug: string;
+
+  try {
+    slug = await createArticleFromRssCandidate(candidate);
+    await updateRssCandidateStatus(id, {
+      status: "imported",
+      articleSlug: slug
+    });
+  } catch {
+    redirect("/admin/rss?error=rss-import-failed");
+  }
+
+  redirect(`/admin/articles/${slug}?createdFromRss=1`);
 }
 
 function getResourceInput(formData: FormData) {

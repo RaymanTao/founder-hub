@@ -22,6 +22,8 @@ type RssItemRow = {
   score: number | null;
   duplicate_risk: RssCandidate["duplicateRisk"];
   suggested_tags: string[] | null;
+  article_slug: string | null;
+  imported_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -53,6 +55,8 @@ const rssItemFields = [
   "score",
   "duplicate_risk",
   "suggested_tags",
+  "article_slug",
+  "imported_at",
   "created_at",
   "updated_at"
 ].join(",");
@@ -78,6 +82,8 @@ function mapRssItemRow(row: RssItemRow): RssCandidate {
     score: row.score,
     duplicateRisk: row.duplicate_risk,
     suggestedTags: row.suggested_tags ?? [],
+    articleSlug: row.article_slug,
+    importedAt: row.imported_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -116,4 +122,47 @@ export async function listRssCandidates(options: ListRssCandidatesOptions = {}) 
 
   const rows = (await response.json()) as RssItemRow[];
   return rows.map(mapRssItemRow);
+}
+
+export async function getRssCandidateById(id: string) {
+  if (!isSupabaseConfigured()) return null;
+
+  const response = await supabaseFetch(
+    `rss_items?id=eq.${encodeURIComponent(id)}&select=${rssItemFields}&limit=1`
+  );
+
+  if (!response.ok) {
+    throw new Error(`RSS_ITEM_FIND_FAILED_${response.status}`);
+  }
+
+  const rows = (await response.json()) as RssItemRow[];
+  return rows[0] ? mapRssItemRow(rows[0]) : null;
+}
+
+export async function updateRssCandidateStatus(
+  id: string,
+  input: {
+    status: RssItemStatus;
+    articleSlug?: string;
+  }
+) {
+  if (!isSupabaseConfigured()) return false;
+
+  const response = await supabaseFetch(`rss_items?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: {
+      Prefer: "return=minimal"
+    },
+    body: JSON.stringify({
+      status: input.status,
+      article_slug: input.articleSlug ?? null,
+      imported_at: input.status === "imported" ? new Date().toISOString() : null
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`RSS_ITEM_STATUS_FAILED_${response.status}`);
+  }
+
+  return true;
 }

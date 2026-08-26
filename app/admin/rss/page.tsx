@@ -1,5 +1,9 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import {
+  createArticleFromRssCandidateAction,
+  setRssCandidateStatusAction
+} from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listRssCandidates } from "@/lib/rss-items";
 import { formatDate } from "@/lib/utils";
@@ -11,6 +15,7 @@ type Props = {
     q?: string;
     status?: string;
     category?: string;
+    error?: string;
   }>;
 };
 
@@ -70,6 +75,7 @@ export default async function AdminRssPage({ searchParams }: Props) {
 
   const params = (await searchParams) ?? {};
   const q = params.q?.trim() ?? "";
+  const error = params.error ?? "";
   const status = statuses.includes(params.status as RssItemStatus)
     ? (params.status as RssItemStatus)
     : "All";
@@ -83,6 +89,13 @@ export default async function AdminRssPage({ searchParams }: Props) {
     category,
     limit: 120
   });
+  const returnTo = buildRssHref({ q, status, category });
+  const errorCopy: Record<string, string> = {
+    "invalid-rss-status": "候选状态无效。",
+    "invalid-rss-item": "RSS 候选 ID 无效。",
+    "rss-item-not-found": "没有找到这条 RSS 候选。",
+    "rss-import-failed": "生成文章草稿失败，请稍后重试。"
+  };
 
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
@@ -145,6 +158,12 @@ export default async function AdminRssPage({ searchParams }: Props) {
           筛选
         </button>
       </form>
+
+      {error ? (
+        <div className="mt-5 rounded-[1rem] border border-[rgba(143,78,69,0.2)] bg-[rgba(143,78,69,0.07)] p-4 text-sm text-[var(--danger)]">
+          {errorCopy[error] ?? "操作失败，请重试。"}
+        </div>
+      ) : null}
 
       <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
         <span>当前显示 {candidates?.length ?? 0} 条候选</span>
@@ -212,6 +231,64 @@ export default async function AdminRssPage({ searchParams }: Props) {
                 >
                   原文
                 </a>
+                {item.status === "imported" && item.articleSlug ? (
+                  <Link
+                    href={`/admin/articles/${item.articleSlug}`}
+                    className="rounded-full bg-[var(--foreground)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
+                  >
+                    编辑文章
+                  </Link>
+                ) : (
+                  <>
+                    {item.status !== "selected" ? (
+                      <form action={setRssCandidateStatusAction}>
+                        <input type="hidden" name="id" value={item.id} />
+                        <input type="hidden" name="status" value="selected" />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <button
+                          type="submit"
+                          className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+                        >
+                          入选
+                        </button>
+                      </form>
+                    ) : null}
+                    {item.status !== "rejected" ? (
+                      <form action={setRssCandidateStatusAction}>
+                        <input type="hidden" name="id" value={item.id} />
+                        <input type="hidden" name="status" value="rejected" />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <button
+                          type="submit"
+                          className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+                        >
+                          拒绝
+                        </button>
+                      </form>
+                    ) : (
+                      <form action={setRssCandidateStatusAction}>
+                        <input type="hidden" name="id" value={item.id} />
+                        <input type="hidden" name="status" value="pending" />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <button
+                          type="submit"
+                          className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+                        >
+                          恢复
+                        </button>
+                      </form>
+                    )}
+                    <form action={createArticleFromRssCandidateAction}>
+                      <input type="hidden" name="id" value={item.id} />
+                      <button
+                        type="submit"
+                        className="rounded-full bg-[var(--foreground)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
+                      >
+                        生成草稿
+                      </button>
+                    </form>
+                  </>
+                )}
               </div>
             </article>
           ))}

@@ -300,6 +300,8 @@ create table if not exists public.rss_items (
   score integer check (score between 0 and 100),
   duplicate_risk text check (duplicate_risk in ('low', 'medium', 'high')),
   suggested_tags jsonb not null default '[]'::jsonb,
+  article_slug text,
+  imported_at timestamptz,
   raw_payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

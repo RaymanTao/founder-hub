@@ -89,6 +89,8 @@ npm run import:rss
 Imported items are upserted into `rss_items` by canonical URL and shown at
 `/admin/rss`. Review candidates there before turning them into Founder Hub articles.
 This keeps the homepage fed by edited/published `articles`, not raw syndicated text.
+The RSS candidate page supports selecting, rejecting, restoring, and generating an
+unpublished article draft from a candidate.
 
 For local-only fallback, import enabled feed items as unpublished MDX drafts with:
 

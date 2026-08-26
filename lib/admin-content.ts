@@ -10,6 +10,7 @@ import {
 import { createInterpretationTemplate } from "@/lib/article-template";
 import { cacheRemoteImageToR2 } from "@/lib/remote-media";
 import { ArticleMeta, ArticleType } from "@/types/article";
+import type { RssCandidate } from "@/types/rss";
 
 const contentDir = path.join(process.cwd(), "content", "writing");
 
@@ -287,6 +288,62 @@ export async function createArticleFromUrl(url: string) {
         cachedCover,
         publishedAt: page.publishedAt,
         keywords: page.keywords
+      }
+    });
+  }
+
+  return slug;
+}
+
+export async function createArticleFromRssCandidate(candidate: RssCandidate) {
+  const slug = await ensureUniqueSlug(candidate.title);
+  const date = candidate.publishedAt
+    ? new Date(candidate.publishedAt).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+  const meta: ArticleMeta = {
+    title: candidate.title,
+    slug,
+    description:
+      candidate.description ||
+      `来自 ${candidate.feedTitle} 的 RSS 候选资讯，待补充创业视角解读。`,
+    date,
+    category: candidate.category,
+    type: candidate.type,
+    readingTime: "5 min",
+    featured: false,
+    published: false,
+    archived: false,
+    number: 0,
+    source: candidate.feedTitle,
+    sourceUrl: candidate.canonicalUrl || candidate.url,
+    verified: false,
+    access: "Free",
+    tags: candidate.suggestedTags
+  };
+
+  const body = createInterpretationTemplate({
+    title: candidate.title,
+    sourceUrl: candidate.canonicalUrl || candidate.url,
+    source: candidate.feedTitle,
+    description: candidate.description
+  });
+
+  await writeArticle(slug, meta, body);
+
+  if (shouldWriteArticlesToSupabase()) {
+    await upsertSupabaseArticleSource({
+      articleSlug: slug,
+      sourceUrl: candidate.canonicalUrl || candidate.url,
+      sourceTitle: candidate.title,
+      sourceSite: candidate.feedTitle,
+      metadata: {
+        importedFrom: "rss-candidate",
+        rssItemId: candidate.id,
+        feedId: candidate.feedId,
+        score: candidate.score,
+        relevanceScore: candidate.relevanceScore,
+        founderValueScore: candidate.founderValueScore,
+        freshnessScore: candidate.freshnessScore
       }
     });
   }
