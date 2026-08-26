@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button-link";
 import { navigation } from "@/data/site";
 import { SearchOverlay } from "@/components/search/search-overlay";
@@ -10,6 +11,12 @@ import { AuthOverlay } from "@/components/auth/auth-overlay";
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [readerEmail, setReaderEmail] = useState<string | null>(null);
+  const pathname = usePathname();
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/" || pathname.startsWith("/writing/");
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -33,7 +40,7 @@ export function Navbar() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm text-[var(--secondary)] transition hover:text-[var(--foreground)]"
+              className={`rounded-full px-3 py-2 text-sm transition ${isActive(item.href) ? "bg-white text-[var(--foreground)] shadow-[0_4px_14px_rgba(23,19,17,0.08)]" : "text-[var(--secondary)] hover:text-[var(--foreground)]"}`}
             >
               {item.label}
             </Link>
@@ -68,7 +75,7 @@ export function Navbar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="rounded-2xl px-4 py-3 text-sm text-[var(--foreground)] hover:bg-[var(--surface-alt)]"
+                className={`rounded-2xl px-4 py-3 text-sm ${isActive(item.href) ? "bg-white font-semibold text-[var(--foreground)]" : "text-[var(--foreground)] hover:bg-[var(--surface-alt)]"}`}
               >
                 {item.label}
               </Link>
