@@ -200,3 +200,8 @@ When article URL import finds a remote `og:image` or `twitter:image` and R2 is
 configured, the image is copied to the `crawled-images/` prefix. The article `cover`
 uses the R2 public URL, and the original image URL is recorded in `media_assets.source_url`.
 If the copy fails or the file is not an image, import continues with the original URL.
+
+Resource downloads go through `/api/resources/download/[id]`. Free resources redirect
+through this server endpoint, while member resources remain locked until membership
+verification is implemented. Do not put private download URLs directly in public page
+markup; use R2 signed URLs or a protected provider endpoint for member-only files.
