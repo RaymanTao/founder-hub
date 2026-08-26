@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button-link";
 import { navigation } from "@/data/site";
+import { SearchOverlay } from "@/components/search/search-overlay";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -39,13 +40,16 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <SearchOverlay />
           <ButtonLink href={readerEmail ? "/account" : "/login"} variant="secondary">
             {readerEmail ? "我的" : "登录"}
           </ButtonLink>
           <ButtonLink href="/contact">发起咨询</ButtonLink>
         </div>
 
-        <button
+        <div className="flex items-center gap-2 md:hidden">
+          <SearchOverlay mobile />
+          <button
           type="button"
           aria-label={open ? "关闭菜单" : "打开菜单"}
           aria-expanded={open}
@@ -53,7 +57,8 @@ export function Navbar() {
           className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.6)] md:hidden"
         >
           <span className="text-lg">{open ? "×" : "≡"}</span>
-        </button>
+          </button>
+        </div>
       </div>
 
       {open ? (
@@ -69,6 +74,13 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
+            <Link
+              href="/search"
+              onClick={() => setOpen(false)}
+              className="rounded-2xl border border-[var(--border)] bg-[rgba(255,255,255,0.65)] px-4 py-3 text-sm font-medium text-[var(--foreground)]"
+            >
+              搜索全站
+            </Link>
             <Link
               href={readerEmail ? "/account" : "/login"}
               onClick={() => setOpen(false)}
