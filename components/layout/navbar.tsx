@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button-link";
 import { navigation } from "@/data/site";
 import { SearchOverlay } from "@/components/search/search-overlay";
+import { AuthOverlay } from "@/components/auth/auth-overlay";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -41,9 +42,7 @@ export function Navbar() {
 
         <div className="hidden items-center gap-3 md:flex">
           <SearchOverlay />
-          <ButtonLink href={readerEmail ? "/account" : "/login"} variant="secondary">
-            {readerEmail ? "我的" : "登录"}
-          </ButtonLink>
+          {readerEmail ? <ButtonLink href="/account" variant="secondary">我的</ButtonLink> : <AuthOverlay />}
           <ButtonLink href="/contact">发起咨询</ButtonLink>
         </div>
 
@@ -81,13 +80,7 @@ export function Navbar() {
             >
               搜索全站
             </Link>
-            <Link
-              href={readerEmail ? "/account" : "/login"}
-              onClick={() => setOpen(false)}
-              className="rounded-2xl border border-[var(--border)] bg-[rgba(255,255,255,0.65)] px-4 py-3 text-sm font-medium text-[var(--foreground)]"
-            >
-              {readerEmail ? "我的账号" : "登录"}
-            </Link>
+            {readerEmail ? <Link href="/account" onClick={() => setOpen(false)} className="rounded-2xl border border-[var(--border)] bg-[rgba(255,255,255,0.65)] px-4 py-3 text-sm font-medium text-[var(--foreground)]">我的账号</Link> : <AuthOverlay mobile />}
             <Link
               href="/contact"
               onClick={() => setOpen(false)}

@@ -8,6 +8,7 @@ Set these environment variables in production:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 CRON_SECRET=
 ```
@@ -27,6 +28,22 @@ Current tables:
 - `media_assets`
 
 All tables use RLS and are managed through the service role from server-side routes.
+
+### Supabase Auth
+
+Email/password registration and login use Supabase Auth. Add the project's anon key as
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`; it is safe to expose as a public project identifier,
+but `SUPABASE_SERVICE_ROLE_KEY` must remain server-only. Enable Email provider in
+Supabase Authentication settings. For Google login, enable the Google provider, add
+the Google Client ID and Secret, and add this callback URL to Supabase's allowed
+redirect URLs:
+
+```text
+https://your-domain.com/auth/callback
+```
+
+Also set `NEXT_PUBLIC_SITE_URL` to the same production origin. Local development uses
+`http://localhost:3000/auth/callback`.
 
 Article content defaults to local MDX files. To read articles from Supabase, set:
 
