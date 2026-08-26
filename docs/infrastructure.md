@@ -103,6 +103,32 @@ npm run import:rss -- --no-ai
 
 Admins can also run AI screening for a single candidate from `/admin/rss`.
 
+### Scheduled imports
+
+The repository includes a GitHub Actions workflow at
+`.github/workflows/rss-import.yml`. It runs every day at 09:17 China Standard Time
+and can also be started manually from the Actions page. The workflow is intentionally
+read-only against the repository: it only writes candidates through the Supabase API.
+
+Add these GitHub repository secrets before enabling the workflow:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+DEEPSEEK_API_KEY
+```
+
+These are optional and use the application defaults when omitted:
+
+```text
+DEEPSEEK_BASE_URL
+DEEPSEEK_MODEL
+```
+
+The scheduled job imports at most five items per enabled feed. A manual run can set a
+different per-feed limit. If no feed in `data/rss-feeds.json` has both `enabled: true`
+and a URL, the job exits successfully without importing anything.
+
 For local-only fallback, import enabled feed items as unpublished MDX drafts with:
 
 ```bash
