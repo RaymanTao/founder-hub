@@ -270,6 +270,72 @@ for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');
 
+create table if not exists public.rss_items (
+  id uuid primary key default gen_random_uuid(),
+  feed_id text not null,
+  feed_title text not null,
+  feed_url text not null,
+  title text not null,
+  url text not null,
+  canonical_url text not null unique,
+  description text,
+  published_at timestamptz,
+  category text not null check (category in ('Build', 'AI', 'Growth', 'Solopreneur')),
+  type text not null check (
+    type in (
+      'Tutorial',
+      'Case Study',
+      'Essay',
+      'Build Log',
+      'Product Review',
+      'Founder Analysis',
+      'Experiment'
+    )
+  ),
+  language text not null default 'zh-CN',
+  status text not null default 'pending' check (status in ('pending', 'selected', 'rejected', 'imported')),
+  relevance_score integer check (relevance_score between 0 and 100),
+  founder_value_score integer check (founder_value_score between 0 and 100),
+  freshness_score integer check (freshness_score between 0 and 100),
+  score integer check (score between 0 and 100),
+  duplicate_risk text check (duplicate_risk in ('low', 'medium', 'high')),
+  suggested_tags jsonb not null default '[]'::jsonb,
+  raw_payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists rss_items_status_idx
+  on public.rss_items (status);
+
+create index if not exists rss_items_category_idx
+  on public.rss_items (category);
+
+create index if not exists rss_items_published_at_idx
+  on public.rss_items (published_at desc);
+
+create index if not exists rss_items_score_idx
+  on public.rss_items (score desc nulls last);
+
+drop trigger if exists rss_items_set_updated_at
+  on public.rss_items;
+
+create trigger rss_items_set_updated_at
+before update on public.rss_items
+for each row
+execute function public.set_updated_at();
+
+alter table public.rss_items enable row level security;
+
+drop policy if exists "Service role can manage rss items"
+  on public.rss_items;
+
+create policy "Service role can manage rss items"
+on public.rss_items
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
 create table if not exists public.resources (
   id text primary key,
   title text not null,

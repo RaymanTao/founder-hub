@@ -3,6 +3,7 @@ import Link from "next/link";
 import { logoutAdmin, setArticleArchivedAction } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAllResources } from "@/lib/resources";
+import { listRssCandidates } from "@/lib/rss-items";
 import { formatDate } from "@/lib/utils";
 import { getAllArticles } from "@/lib/writing";
 import type { ArticleAccess, ArticleCategory } from "@/types/article";
@@ -61,9 +62,10 @@ export default async function AdminPage({ searchParams }: Props) {
   const status = params.status ?? "All";
   const category = params.category ?? "All";
   const access = params.access ?? "All";
-  const [articles, resources] = await Promise.all([
+  const [articles, resources, rssCandidates] = await Promise.all([
     getAllArticles({ includeDrafts: true, includeArchived: true }),
-    getAllResources({ includeArchived: true })
+    getAllResources({ includeArchived: true }),
+    listRssCandidates({ status: "pending", limit: 1 })
   ]);
   const featuredCount = articles.filter((article) => article.featured).length;
   const deepCount = articles.filter((article) => article.access === "Deep Dive").length;
@@ -126,7 +128,8 @@ export default async function AdminPage({ searchParams }: Props) {
           ["草稿", draftCount, "/admin?status=Draft"],
           ["归档", archivedCount, "/admin?status=Archived"],
           ["资源", resources.length, "/admin/resources"],
-          ["媒体", "R2", "/admin/media"]
+          ["媒体", "R2", "/admin/media"],
+          ["RSS", rssCandidates ? "候选池" : "配置", "/admin/rss"]
         ].map(([label, value, href]) => (
           <Link
             key={label}

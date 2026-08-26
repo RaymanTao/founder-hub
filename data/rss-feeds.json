@@ -1,11 +1,24 @@
 [
   {
-    "id": "startup-news",
-    "title": "创业资讯",
+    "id": "startup-company-news",
+    "title": "创业公司动态",
     "url": "",
     "category": "Build",
     "type": "Founder Analysis",
-    "tags": ["创业", "资讯"],
+    "language": "zh-CN",
+    "tags": ["创业公司", "产品动态"],
+    "trustScore": 80,
+    "enabled": false
+  },
+  {
+    "id": "solo-company-news",
+    "title": "一人公司案例",
+    "url": "",
+    "category": "Solopreneur",
+    "type": "Case Study",
+    "language": "zh-CN",
+    "tags": ["一人公司", "案例"],
+    "trustScore": 80,
     "enabled": false
   },
   {
@@ -14,16 +27,31 @@
     "url": "",
     "category": "Growth",
     "type": "Founder Analysis",
+    "language": "zh-CN",
     "tags": ["融资", "创业公司"],
+    "trustScore": 75,
     "enabled": false
   },
   {
-    "id": "case-studies",
-    "title": "案例资讯",
+    "id": "case-study-news",
+    "title": "案例拆解",
     "url": "",
-    "category": "Solopreneur",
+    "category": "Growth",
     "type": "Case Study",
-    "tags": ["案例", "商业模式"],
+    "language": "zh-CN",
+    "tags": ["案例拆解", "增长"],
+    "trustScore": 85,
+    "enabled": false
+  },
+  {
+    "id": "ai-product-news",
+    "title": "AI 产品资讯",
+    "url": "",
+    "category": "AI",
+    "type": "Product Review",
+    "language": "zh-CN",
+    "tags": ["AI 产品", "AI 工具"],
+    "trustScore": 80,
     "enabled": false
   }
 ]

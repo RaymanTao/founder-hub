@@ -18,6 +18,7 @@ Current tables:
 - `articles`
 - `article_revisions`
 - `article_sources`
+- `rss_items`
 - `resources`
 - `newsletter_subscribers`
 - `resource_leads`
@@ -79,14 +80,24 @@ default. Add a feed URL and set `enabled` to `true`, then preview with:
 npm run import:rss -- --dry-run
 ```
 
-Import enabled feed items as unpublished local article drafts with:
+Import enabled feed items into the Supabase RSS candidate pool with:
 
 ```bash
 npm run import:rss
 ```
 
-Each imported item is saved under `content/writing/` with source metadata, tags, and a
-starter interpretation template. Review and publish from the admin editor.
+Imported items are upserted into `rss_items` by canonical URL and shown at
+`/admin/rss`. Review candidates there before turning them into Founder Hub articles.
+This keeps the homepage fed by edited/published `articles`, not raw syndicated text.
+
+For local-only fallback, import enabled feed items as unpublished MDX drafts with:
+
+```bash
+npm run import:rss:legacy
+```
+
+Legacy drafts are saved under `content/writing/` with source metadata, tags, and a
+starter interpretation template.
 
 ## Cloudflare R2
 

@@ -1,0 +1,227 @@
+import { Metadata } from "next";
+import Link from "next/link";
+import { requireAdmin } from "@/lib/admin-auth";
+import { listRssCandidates } from "@/lib/rss-items";
+import { formatDate } from "@/lib/utils";
+import type { ArticleCategory } from "@/types/article";
+import type { RssItemStatus } from "@/types/rss";
+
+type Props = {
+  searchParams?: Promise<{
+    q?: string;
+    status?: string;
+    category?: string;
+  }>;
+};
+
+const statuses: Array<RssItemStatus | "All"> = [
+  "All",
+  "pending",
+  "selected",
+  "rejected",
+  "imported"
+];
+const categories: Array<ArticleCategory | "All"> = [
+  "All",
+  "Build",
+  "AI",
+  "Growth",
+  "Solopreneur"
+];
+
+export const metadata: Metadata = {
+  title: "RSS 候选池 | Founder Hub",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
+
+export const dynamic = "force-dynamic";
+
+function statusLabel(status: RssItemStatus | "All") {
+  const labels = {
+    All: "全部状态",
+    pending: "待筛选",
+    selected: "已入选",
+    rejected: "已拒绝",
+    imported: "已生成文章"
+  };
+  return labels[status];
+}
+
+function buildRssHref(params: {
+  q?: string;
+  status?: string;
+  category?: string;
+}) {
+  const query = new URLSearchParams();
+  if (params.q) query.set("q", params.q);
+  if (params.status && params.status !== "All") query.set("status", params.status);
+  if (params.category && params.category !== "All") {
+    query.set("category", params.category);
+  }
+  const qs = query.toString();
+  return qs ? `/admin/rss?${qs}` : "/admin/rss";
+}
+
+export default async function AdminRssPage({ searchParams }: Props) {
+  await requireAdmin();
+
+  const params = (await searchParams) ?? {};
+  const q = params.q?.trim() ?? "";
+  const status = statuses.includes(params.status as RssItemStatus)
+    ? (params.status as RssItemStatus)
+    : "All";
+  const category = categories.includes(params.category as ArticleCategory)
+    ? (params.category as ArticleCategory)
+    : "All";
+
+  const candidates = await listRssCandidates({
+    q,
+    status,
+    category,
+    limit: 120
+  });
+
+  return (
+    <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
+      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
+            RSS Intake
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
+            RSS 候选池
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--secondary)]">
+            第三方 RSS 会先进入候选池，完成去重、评分和人工判断后，再生成自己的创业情报文章。
+          </p>
+        </div>
+        <Link
+          href="/admin"
+          className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+        >
+          返回后台
+        </Link>
+      </div>
+
+      <form
+        action="/admin/rss"
+        className="mt-8 grid gap-3 rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] p-4 lg:grid-cols-[1fr_160px_160px_auto]"
+      >
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="搜索标题、摘要、来源..."
+          className="min-h-11 rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.78)] px-4 text-sm outline-none transition focus:border-[var(--accent)]"
+        />
+        <select
+          name="status"
+          defaultValue={status}
+          className="min-h-11 rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.78)] px-4 text-sm outline-none transition focus:border-[var(--accent)]"
+        >
+          {statuses.map((item) => (
+            <option key={item} value={item}>
+              {statusLabel(item)}
+            </option>
+          ))}
+        </select>
+        <select
+          name="category"
+          defaultValue={category}
+          className="min-h-11 rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.78)] px-4 text-sm outline-none transition focus:border-[var(--accent)]"
+        >
+          {categories.map((item) => (
+            <option key={item} value={item}>
+              {item === "All" ? "全部分类" : item}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="min-h-11 rounded-full bg-[var(--foreground)] px-5 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
+        >
+          筛选
+        </button>
+      </form>
+
+      <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
+        <span>当前显示 {candidates?.length ?? 0} 条候选</span>
+        {(q || status !== "All" || category !== "All") ? (
+          <Link
+            href="/admin/rss"
+            className="font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
+          >
+            清空筛选
+          </Link>
+        ) : null}
+      </div>
+
+      {!candidates ? (
+        <div className="mt-6 rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-6 text-sm leading-7 text-[var(--secondary)]">
+          当前还没有连接 Supabase。配置 `NEXT_PUBLIC_SUPABASE_URL`、
+          `SUPABASE_SERVICE_ROLE_KEY` 并执行 `supabase/schema.sql` 后，这里会显示 RSS
+          候选资讯。
+        </div>
+      ) : (
+        <div className="mt-6 overflow-hidden rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)]">
+          {candidates.map((item) => (
+            <article
+              key={item.id}
+              className="grid gap-4 border-b border-[var(--border)] p-5 last:border-b-0 lg:grid-cols-[1fr_180px_120px]"
+            >
+              <div>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+                  <span>{item.feedTitle}</span>
+                  <span>/</span>
+                  <span>{item.category}</span>
+                  <span>/</span>
+                  <span>{statusLabel(item.status)}</span>
+                </div>
+                <h2 className="mt-2 text-lg font-semibold leading-7 text-[var(--foreground)]">
+                  {item.title}
+                </h2>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--secondary)]">
+                  {item.description || "暂无摘要。"}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.suggestedTags.slice(0, 5).map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.58)] px-2.5 py-1 text-xs text-[var(--secondary)]"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-sm leading-7 text-[var(--muted)]">
+                <p>{item.publishedAt ? formatDate(item.publishedAt) : "未知日期"}</p>
+                <p>综合评分：{item.score ?? "待评分"}</p>
+                <p>价值：{item.founderValueScore ?? "-"}</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+                >
+                  原文
+                </a>
+              </div>
+            </article>
+          ))}
+          {!candidates.length ? (
+            <div className="p-6 text-sm text-[var(--secondary)]">
+              没有找到符合条件的 RSS 候选。
+            </div>
+          ) : null}
+        </div>
+      )}
+    </main>
+  );
+}
