@@ -175,7 +175,7 @@ export default async function AdminPage({ searchParams }: Props) {
               新建 / 采集
             </Link>
             <Link
-              href="/writing"
+                  href="/"
               className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
             >
               查看前台

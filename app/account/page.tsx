@@ -33,7 +33,7 @@ export default async function AccountPage() {
         </p>
         <div className="mt-7 grid gap-4 sm:grid-cols-2">
           <Link
-            href="/writing"
+            href="/"
             className="rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,255,255,0.56)] p-5 transition hover:border-[var(--accent)]"
           >
             <h2 className="text-xl font-semibold text-[var(--foreground)]">继续阅读</h2>
@@ -57,7 +57,7 @@ export default async function AccountPage() {
               我的收藏
             </h2>
             <Link
-              href="/writing"
+              href="/"
               className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
             >
               去内容库

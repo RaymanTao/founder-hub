@@ -182,12 +182,22 @@ function ArticleCard({
   );
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams
+}: {
+  searchParams?: Promise<{ tag?: string }>;
+}) {
   const articles = await getAllArticles();
-  const featuredArticle = articles.find((item) => item.featured) ?? articles[0];
-  const latestArticles = articles
+  const params = (await searchParams) ?? {};
+  const selectedTag = params.tag?.trim() ?? "";
+  const tags = Array.from(new Set(articles.flatMap((article) => article.tags))).slice(0, 12);
+  const filteredArticles = selectedTag
+    ? articles.filter((article) => article.tags.includes(selectedTag))
+    : articles;
+  const featuredArticle = filteredArticles.find((item) => item.featured) ?? filteredArticles[0];
+  const latestArticles = filteredArticles
     .filter((item) => item.slug !== featuredArticle?.slug)
-    .slice(0, 3);
+    .slice(0, 12);
 
   return (
     <main className="min-h-screen bg-[#F3ECE2] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
@@ -219,19 +229,33 @@ export default async function HomePage() {
             <h2 className="text-[15px] font-semibold tracking-[0.18em] text-[#746a60]">
               最新解读
             </h2>
-            <Link
-              href="/writing"
-              className="text-sm font-semibold text-[#f05a3e] transition hover:text-[#c93924]"
-            >
-              全部 →
-            </Link>
+            <span className="text-sm text-[#8b8178]">共 {latestArticles.length} 篇</span>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-xs font-semibold tracking-[0.16em] text-[#746a60]">热门标签</span>
+            {tags.map((tag) => (
+              <Link
+                key={tag}
+                href={selectedTag === tag ? "/" : `/?tag=${encodeURIComponent(tag)}#latest`}
+                className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                  selectedTag === tag
+                    ? "border-[#ee4f34] bg-[#ee4f34] text-white"
+                    : "border-[#ded2c3] bg-[#fbf8f2] text-[#635b52] hover:border-[#ee4f34] hover:text-[#c93924]"
+                }`}
+              >
+                #{tag}
+              </Link>
+            ))}
+            {selectedTag ? <Link href="/#latest" className="ml-1 text-xs text-[#ee4f34]">清除筛选</Link> : null}
+          </div>
+
+          <div id="latest" className="grid gap-5 md:grid-cols-3">
             {latestArticles.map((article, index) => (
               <ArticleCard key={article.slug} article={article} index={index} />
             ))}
           </div>
+          {!latestArticles.length ? <div className="rounded-[14px] border border-[#e0d4c5] bg-[#fffdf8] p-6 text-sm text-[#635b52]">没有找到对应标签的文章。</div> : null}
         </section>
       </div>
     </main>

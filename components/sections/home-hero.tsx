@@ -19,7 +19,7 @@ export function HomeHero() {
             这里持续沉淀 AI 产品、Agent 自动化、增长系统和一人公司实验，把文章、资源、产品与服务连成一个可复用的个人系统。
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="/writing">进入内容库</ButtonLink>
+            <ButtonLink href="/#latest">进入内容库</ButtonLink>
             <ButtonLink href="/resources" variant="secondary">
               查看资源
             </ButtonLink>

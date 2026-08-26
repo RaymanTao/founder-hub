@@ -67,12 +67,12 @@ export default async function ArticleDetailPage({ params }: Props) {
       <Section>
         <article className="mx-auto max-w-[820px]">
         <div className="text-sm text-[var(--muted)]">
-          <Link href="/writing" className="transition hover:text-[var(--foreground)]">
+          <Link href="/" className="transition hover:text-[var(--foreground)]">
             文章
           </Link>
           <span className="mx-2">/</span>
           <Link
-            href={`/writing?category=${article.category}`}
+            href="/"
             className="transition hover:text-[var(--foreground)]"
           >
             {article.category}
@@ -103,7 +103,7 @@ export default async function ArticleDetailPage({ params }: Props) {
             {article.tags.map((tag) => (
               <Link
                 key={tag}
-                href={`/writing?tag=${encodeURIComponent(tag)}`}
+                href={`/?tag=${encodeURIComponent(tag)}#latest`}
                 className="rounded-full border border-[rgba(138,106,82,0.14)] bg-[rgba(255,255,255,0.56)] px-3 py-1 text-xs text-[var(--secondary)] transition hover:text-[var(--foreground)]"
               >
                 #{tag}
