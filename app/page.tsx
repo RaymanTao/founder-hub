@@ -23,14 +23,6 @@ function formatNumber(number: number) {
   return `№ ${String(number || 1).padStart(4, "0")}`;
 }
 
-function MembershipBadge() {
-  return (
-    <span className="inline-flex items-center rounded-[5px] border border-white/15 bg-[#211b1c] px-2 py-1 text-[11px] font-semibold text-white shadow-sm">
-      🔒 会员
-    </span>
-  );
-}
-
 function StatusPill({
   children,
   tone = "dark"
@@ -127,7 +119,7 @@ function FeaturedCard({ article }: { article: ArticleMeta }) {
       className="relative block overflow-hidden rounded-[18px] bg-[#14251f] px-9 py-10 text-white shadow-[0_22px_42px_rgba(23,19,17,0.18)] transition hover:-translate-y-0.5 sm:px-10 sm:py-10"
     >
       <div className="absolute right-8 top-5 hidden text-[72px] font-black tracking-[0.08em] text-white/7 sm:block">
-        DEEP DIVE
+        DEEP NEWS
       </div>
       <div className="relative z-10 flex flex-wrap items-center gap-2 text-sm text-white/66">
         <StatusPill>{article.access === "Deep Dive" ? "深度" : "快讯"}</StatusPill>
@@ -170,10 +162,7 @@ function ArticleCard({
             </span>
           ) : null}
         </div>
-        <div className="absolute right-3 top-3">
-          <MembershipBadge />
-        </div>
-        <span className="absolute right-4 top-10 text-[11px] text-[#8b8178]">
+        <span className="absolute right-4 top-4 text-[11px] text-[#8b8178]">
           {formatNumber(article.number)}
         </span>
       </div>
