@@ -63,7 +63,7 @@ export function SearchOverlay({ mobile = false }: { mobile?: boolean }) {
       </button>
 
       {open && typeof document !== "undefined" ? createPortal(
-        <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-10 backdrop-blur-[3px] sm:py-16" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
+        <div className="fixed inset-0 z-[70] flex min-h-screen items-center justify-center overflow-y-auto bg-black/85 px-4 py-8 backdrop-blur-[3px] sm:py-12" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
           <section role="dialog" aria-modal="true" aria-label="全站搜索" className="w-full max-w-3xl rounded-[1.25rem] border border-white/20 bg-[#F3ECE2] p-5 shadow-2xl sm:p-8">
             <div className="flex items-start justify-between gap-4">
               <div><p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">Search</p><h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--foreground)]">搜索全站内容</h2></div>

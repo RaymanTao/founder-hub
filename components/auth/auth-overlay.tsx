@@ -40,7 +40,7 @@ export function AuthOverlay({ mobile = false }: { mobile?: boolean }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={mobile ? "rounded-2xl border border-[var(--border)] bg-[rgba(255,255,255,0.65)] px-4 py-3 text-sm font-medium text-[var(--foreground)]" : "inline-flex min-h-10 items-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.65)] px-4 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"}>{mobile ? "登录 / 注册" : "登录"}</button>
-      {open && typeof document !== "undefined" ? createPortal(<div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-8 backdrop-blur-[3px] sm:py-14" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
+      {open && typeof document !== "undefined" ? createPortal(<div className="fixed inset-0 z-[70] flex min-h-screen items-center justify-center overflow-y-auto bg-black/85 px-4 py-8 backdrop-blur-[3px] sm:py-14" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
         <section role="dialog" aria-modal="true" aria-label="登录或注册" className="relative w-full max-w-[420px] rounded-[1.25rem] border border-white/20 bg-[#fffdf8] p-6 shadow-2xl sm:p-8">
           <button type="button" aria-label="关闭登录弹窗" onClick={() => setOpen(false)} className="absolute right-5 top-4 text-2xl text-[#8b8178]">×</button>
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ee4f34]">Account</p>
