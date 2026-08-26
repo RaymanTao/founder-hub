@@ -3,13 +3,15 @@ import Link from "next/link";
 import {
   analyzeRssCandidateAction,
   createArticleFromRssCandidateAction,
-  setRssCandidateStatusAction
+  setRssCandidateStatusAction,
+  runRssImportAction
 } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listRssCandidates } from "@/lib/rss-items";
 import { formatDate } from "@/lib/utils";
 import type { ArticleCategory } from "@/types/article";
 import type { RssItemStatus } from "@/types/rss";
+import { listRssRuns } from "@/lib/rss-runs";
 
 type Props = {
   searchParams?: Promise<{
@@ -17,6 +19,8 @@ type Props = {
     status?: string;
     category?: string;
     error?: string;
+    run?: string;
+    items?: string;
   }>;
 };
 
@@ -90,6 +94,7 @@ export default async function AdminRssPage({ searchParams }: Props) {
     category,
     limit: 120
   });
+  const runs = await listRssRuns(5);
   const returnTo = buildRssHref({ q, status, category });
   const errorCopy: Record<string, string> = {
     "invalid-rss-status": "候选状态无效。",
@@ -171,6 +176,12 @@ export default async function AdminRssPage({ searchParams }: Props) {
           {errorCopy[error] ?? "操作失败，请重试。"}
         </div>
       ) : null}
+      {params.run ? <div className={`mt-5 rounded-[1rem] p-4 text-sm ${params.run === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{params.run === "success" ? `抓取完成，新增 ${params.items ?? 0} 条候选。` : "抓取失败，请查看运行记录。"}</div> : null}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] px-4 py-3">
+        <div><p className="text-sm font-medium text-[var(--foreground)]">自动抓取</p><p className="mt-1 text-xs text-[var(--muted)]">Vercel Cron 每天运行，也可以立即手动执行。</p></div>
+        <form action={runRssImportAction}><button className="rounded-full bg-[var(--foreground)] px-4 py-2 text-sm font-medium text-white">立即抓取</button></form>
+      </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
         <span>当前显示 {candidates?.length ?? 0} 条候选</span>
@@ -183,6 +194,8 @@ export default async function AdminRssPage({ searchParams }: Props) {
           </Link>
         ) : null}
       </div>
+
+      {runs?.length ? <div className="mt-5 rounded-[1rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] p-4"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">最近运行</p><div className="mt-3 grid gap-2 text-xs text-[var(--secondary)] sm:grid-cols-2 lg:grid-cols-5">{runs.map((run) => <div key={run.id} className="rounded-lg bg-white/50 p-3"><p className="font-medium">{run.trigger === "cron" ? "Cron" : "手动"} · {run.status === "success" ? "成功" : run.status === "failed" ? "失败" : "运行中"}</p><p className="mt-1">{new Date(run.startedAt).toLocaleString("zh-CN")} · {run.itemCount} 条</p></div>)}</div></div> : null}
 
       {!candidates ? (
         <div className="mt-6 rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-6 text-sm leading-7 text-[var(--secondary)]">

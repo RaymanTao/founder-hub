@@ -382,6 +382,26 @@ for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');
 
+create table if not exists public.rss_feed_runs (
+  id uuid primary key default gen_random_uuid(),
+  trigger text not null check (trigger in ('cron', 'manual')),
+  status text not null default 'running' check (status in ('running', 'success', 'failed')),
+  feed_count integer not null default 0,
+  item_count integer not null default 0,
+  message text,
+  started_at timestamptz not null default now(),
+  finished_at timestamptz
+);
+
+create index if not exists rss_feed_runs_started_at_idx on public.rss_feed_runs (started_at desc);
+alter table public.rss_feed_runs enable row level security;
+drop policy if exists "Service role can manage rss feed runs" on public.rss_feed_runs;
+create policy "Service role can manage rss feed runs"
+on public.rss_feed_runs
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
 create table if not exists public.resources (
   id text primary key,
   title text not null,

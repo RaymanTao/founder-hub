@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
-import { deleteRssFeedAction, saveRssFeedAction } from "@/app/admin/actions";
+import { deleteRssFeedAction, saveRssFeedAction, testRssFeedAction } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getRssFeeds } from "@/lib/rss-feeds";
 import type { ArticleCategory, ArticleType } from "@/types/article";
@@ -23,6 +23,7 @@ export default async function RssSourcesPage({ searchParams }: { searchParams?: 
       </div>
       {params.error ? <p className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700">{params.error === "delete-failed" ? "删除失败，请确认已执行数据库迁移。" : "请检查来源信息。"}</p> : null}
       {params.saved || params.deleted ? <p className="mt-5 rounded-xl bg-green-50 p-4 text-sm text-green-700">操作已完成。</p> : null}
+      {params.test ? <p className={`mt-5 rounded-xl p-4 text-sm ${params.test === "ok" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{params.test === "ok" ? `连接成功（HTTP ${params.status ?? 200}）。` : "连接失败，请检查地址或来源是否支持 RSS。"}</p> : null}
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
         <form action={saveRssFeedAction} className="rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-5">
           <h2 className="text-lg font-semibold">新增来源</h2>
@@ -51,7 +52,7 @@ export default async function RssSourcesPage({ searchParams }: { searchParams?: 
                 <div className="grid gap-3 sm:grid-cols-2"><input name="trustScore" type="number" min="0" max="100" defaultValue={feed.trustScore} className="field" /><input name="tags" defaultValue={feed.tags.join(", ")} placeholder="标签，用逗号分隔" className="field" /></div>
                 <button className="w-fit rounded-full bg-[var(--foreground)] px-4 py-2 text-sm font-medium text-white">保存修改</button>
               </form>
-              <form action={deleteRssFeedAction} className="mt-3"><input type="hidden" name="id" value={feed.id} /><button className="text-sm text-red-700">删除</button></form>
+              <div className="mt-3 flex gap-4"><form action={testRssFeedAction}><input type="hidden" name="url" value={feed.url} /><button className="text-sm text-[var(--accent)]">测试连接</button></form><form action={deleteRssFeedAction}><input type="hidden" name="id" value={feed.id} /><button className="text-sm text-red-700">删除</button></form></div>
             </article>
           ))}
           {!feeds.length ? <p className="rounded-xl border border-dashed border-[var(--border)] p-5 text-sm text-[var(--secondary)]">暂无 RSS 来源。</p> : null}

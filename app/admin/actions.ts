@@ -29,6 +29,8 @@ import {
 } from "@/lib/rss-items";
 import { analyzeRssCandidate } from "@/lib/rss-ai";
 import { deleteRssFeed, saveRssFeed } from "@/lib/rss-feeds";
+import { finishRssRun, startRssRun, testRssFeedUrl } from "@/lib/rss-runs";
+import { importRssCandidates } from "@/lib/rss-import";
 import { getArticleBySlug } from "@/lib/writing";
 import type { ArticleAccess, ArticleCategory, ArticleType } from "@/types/article";
 import type { Resource } from "@/types/resource";
@@ -291,6 +293,33 @@ export async function deleteRssFeedAction(formData: FormData) {
     redirect("/admin/rss/sources?error=delete-failed");
   }
   redirect("/admin/rss/sources?deleted=1");
+}
+
+export async function testRssFeedAction(formData: FormData) {
+  await requireAdmin();
+  const url = requireString(formData, "url");
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("invalid");
+    const result = await testRssFeedUrl(parsed.toString());
+    redirect(`/admin/rss/sources?test=${result.ok ? "ok" : "failed"}&status=${result.status}`);
+  } catch {
+    redirect("/admin/rss/sources?test=failed");
+  }
+}
+
+export async function runRssImportAction() {
+  await requireAdmin();
+  const runId = await startRssRun("manual");
+  try {
+    const result = await importRssCandidates(5);
+    await finishRssRun(runId, { status: "success", ...result });
+    redirect(`/admin/rss?run=success&items=${result.itemCount}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "RSS import failed";
+    await finishRssRun(runId, { status: "failed", message });
+    redirect("/admin/rss?run=failed");
+  }
 }
 
 function getResourceInput(formData: FormData) {

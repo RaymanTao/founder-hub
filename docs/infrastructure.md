@@ -134,6 +134,9 @@ accepts requests carrying `Authorization: Bearer <CRON_SECRET>`.
 
 The previous GitHub Actions workflow remains available as a backup/manual import path.
 
+The admin RSS pages also support manual imports, feed connection tests, and recent run
+history. The `rss_feed_runs` table is included in `supabase/schema.sql`.
+
 For local-only fallback, import enabled feed items as unpublished MDX drafts with:
 
 ```bash
