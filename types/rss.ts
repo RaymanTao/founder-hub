@@ -22,6 +22,10 @@ export type RssCandidate = {
   score: number | null;
   duplicateRisk: "low" | "medium" | "high" | null;
   suggestedTags: string[];
+  aiSummary: string | null;
+  founderTakeaway: string | null;
+  aiReason: string | null;
+  analyzedAt: string | null;
   articleSlug: string | null;
   importedAt: string | null;
   createdAt: string;

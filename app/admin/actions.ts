@@ -24,8 +24,10 @@ import {
 } from "@/lib/admin-resources";
 import {
   getRssCandidateById,
+  updateRssCandidateAnalysis,
   updateRssCandidateStatus
 } from "@/lib/rss-items";
+import { analyzeRssCandidate } from "@/lib/rss-ai";
 import { getArticleBySlug } from "@/lib/writing";
 import type { ArticleAccess, ArticleCategory, ArticleType } from "@/types/article";
 import type { Resource } from "@/types/resource";
@@ -218,6 +220,31 @@ export async function createArticleFromRssCandidateAction(formData: FormData) {
   }
 
   redirect(`/admin/articles/${slug}?createdFromRss=1`);
+}
+
+export async function analyzeRssCandidateAction(formData: FormData) {
+  await requireAdmin();
+
+  const id = requireString(formData, "id");
+  const returnTo = requireString(formData, "returnTo") || "/admin/rss";
+
+  if (!id) {
+    redirect("/admin/rss?error=invalid-rss-item");
+  }
+
+  const candidate = await getRssCandidateById(id);
+  if (!candidate) {
+    redirect("/admin/rss?error=rss-item-not-found");
+  }
+
+  try {
+    const analysis = await analyzeRssCandidate(candidate);
+    await updateRssCandidateAnalysis(id, analysis);
+  } catch {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=rss-ai-failed`);
+  }
+
+  redirect(returnTo);
 }
 
 function getResourceInput(formData: FormData) {

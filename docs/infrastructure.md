@@ -92,6 +92,17 @@ This keeps the homepage fed by edited/published `articles`, not raw syndicated t
 The RSS candidate page supports selecting, rejecting, restoring, and generating an
 unpublished article draft from a candidate.
 
+If `DEEPSEEK_API_KEY` is configured, `npm run import:rss` also performs an AI
+screening pass for each imported candidate. The pass writes `ai_summary`,
+`founder_takeaway`, `ai_reason`, scores, duplicate risk, and suggested tags. Disable it
+for a run with:
+
+```bash
+npm run import:rss -- --no-ai
+```
+
+Admins can also run AI screening for a single candidate from `/admin/rss`.
+
 For local-only fallback, import enabled feed items as unpublished MDX drafts with:
 
 ```bash

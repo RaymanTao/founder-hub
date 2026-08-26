@@ -6,6 +6,7 @@ const contentDir = path.join(process.cwd(), "content", "writing");
 const feedsPath = path.join(process.cwd(), "data", "rss-feeds.json");
 const isDryRun = process.argv.includes("--dry-run");
 const useLegacyMdx = process.argv.includes("--legacy-mdx");
+const skipAi = process.argv.includes("--no-ai");
 const limitArg = process.argv.find((arg) => arg.startsWith("--limit="));
 const perFeedLimit = Number(limitArg?.split("=")[1] ?? 5);
 
@@ -19,6 +20,19 @@ function getSupabaseConfig() {
 function isSupabaseConfigured() {
   const config = getSupabaseConfig();
   return Boolean(config.url && config.serviceRoleKey);
+}
+
+function getDeepSeekConfig() {
+  return {
+    baseUrl: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
+    apiKey: process.env.DEEPSEEK_API_KEY ?? "",
+    model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash"
+  };
+}
+
+function isDeepSeekConfigured() {
+  const config = getDeepSeekConfig();
+  return Boolean(config.apiKey && config.model);
 }
 
 async function supabaseFetch(pathname, init = {}) {
@@ -183,6 +197,86 @@ function scoreItem(item, feed) {
   };
 }
 
+function parseJsonObject(content) {
+  const trimmed = content.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
+  const json = fenced ?? trimmed.match(/\{[\s\S]*\}/)?.[0] ?? trimmed;
+  return JSON.parse(json);
+}
+
+function clampScore(value, fallback) {
+  const number = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+async function analyzeItemWithDeepSeek(item, feed, fallbackScores) {
+  const config = getDeepSeekConfig();
+  const response = await fetch(`${config.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${config.apiKey}`
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        {
+          role: "system",
+          content:
+            "你是 Founder Hub 的中文创业资讯编辑。你负责筛选 RSS 候选资讯，判断它是否值得创业者阅读。只输出严格 JSON，不要 Markdown，不要解释。不要编造事实；证据不足时在 aiReason 里说明待核对。"
+        },
+        {
+          role: "user",
+          content: [
+            "请分析这条 RSS 候选资讯，输出 JSON：",
+            '{"aiSummary":"60 字以内中文摘要","founderTakeaway":"一句话说明它对创业者有什么用","aiReason":"为什么推荐或不推荐进入候选池","relevanceScore":0,"founderValueScore":0,"freshnessScore":0,"score":0,"duplicateRisk":"low","suggestedTags":["最多 5 个中文标签"]}',
+            "",
+            "候选资讯：",
+            `标题：${item.title}`,
+            `摘要：${item.description || "无"}`,
+            `来源：${feed.title}`,
+            `链接：${item.link || feed.url}`,
+            `分类：${feed.category}`,
+            `类型：${feed.type}`,
+            `发布时间：${item.date || "未知"}`,
+            `现有标签：${(feed.tags ?? []).join(", ") || "无"}`
+          ].join("\n")
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 900,
+      stream: false
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`DEEPSEEK_ANALYSIS_FAILED_${response.status}`);
+  }
+
+  const payload = await response.json();
+  const content = payload.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error("DEEPSEEK_EMPTY_ANALYSIS");
+
+  const parsed = parseJsonObject(content);
+  const duplicateRisk = parsed.duplicateRisk;
+
+  return {
+    aiSummary: String(parsed.aiSummary ?? "").slice(0, 220),
+    founderTakeaway: String(parsed.founderTakeaway ?? "").slice(0, 220),
+    aiReason: String(parsed.aiReason ?? "").slice(0, 360),
+    relevanceScore: clampScore(parsed.relevanceScore, fallbackScores.relevanceScore),
+    founderValueScore: clampScore(parsed.founderValueScore, fallbackScores.founderValueScore),
+    freshnessScore: clampScore(parsed.freshnessScore, fallbackScores.freshnessScore),
+    score: clampScore(parsed.score, fallbackScores.score),
+    duplicateRisk:
+      duplicateRisk === "medium" || duplicateRisk === "high" ? duplicateRisk : "low",
+    suggestedTags: Array.isArray(parsed.suggestedTags)
+      ? parsed.suggestedTags.map(String).filter(Boolean).slice(0, 5)
+      : feed.tags ?? []
+  };
+}
+
 function createDraftBody(item, feed) {
   return [
     `# ${item.title}`,
@@ -206,9 +300,22 @@ function createDraftBody(item, feed) {
   ].join("\n");
 }
 
-function toCandidatePayload(item, feed) {
+async function toCandidatePayload(item, feed) {
   const canonicalUrl = canonicalizeUrl(item.link);
   const scores = scoreItem(item, feed);
+  let analysis = null;
+
+  if (!skipAi && !isDryRun && isDeepSeekConfigured()) {
+    try {
+      analysis = await analyzeItemWithDeepSeek(item, feed, scores);
+    } catch (error) {
+      console.warn(
+        `AI analysis skipped for "${item.title}": ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
 
   return {
     feed_id: feed.id,
@@ -223,12 +330,16 @@ function toCandidatePayload(item, feed) {
     type: feed.type,
     language: feed.language ?? "zh-CN",
     status: "pending",
-    relevance_score: scores.relevanceScore,
-    founder_value_score: scores.founderValueScore,
-    freshness_score: scores.freshnessScore,
-    score: scores.score,
-    duplicate_risk: "low",
-    suggested_tags: feed.tags ?? [],
+    relevance_score: analysis?.relevanceScore ?? scores.relevanceScore,
+    founder_value_score: analysis?.founderValueScore ?? scores.founderValueScore,
+    freshness_score: analysis?.freshnessScore ?? scores.freshnessScore,
+    score: analysis?.score ?? scores.score,
+    duplicate_risk: analysis?.duplicateRisk ?? "low",
+    suggested_tags: analysis?.suggestedTags ?? feed.tags ?? [],
+    ai_summary: analysis?.aiSummary ?? null,
+    founder_takeaway: analysis?.founderTakeaway ?? null,
+    ai_reason: analysis?.aiReason ?? null,
+    analyzed_at: analysis ? new Date().toISOString() : null,
     raw_payload: {
       title: item.title,
       link: item.link,
@@ -277,7 +388,7 @@ async function importFeedAsMdx(feed, items) {
 }
 
 async function importFeedAsCandidates(feed, items) {
-  const payload = items.map((item) => toCandidatePayload(item, feed));
+  const payload = await Promise.all(items.map((item) => toCandidatePayload(item, feed)));
 
   if (isDryRun) {
     console.log(`${feed.title}: ${payload.length} candidates`);

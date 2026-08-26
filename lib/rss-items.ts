@@ -22,6 +22,10 @@ type RssItemRow = {
   score: number | null;
   duplicate_risk: RssCandidate["duplicateRisk"];
   suggested_tags: string[] | null;
+  ai_summary: string | null;
+  founder_takeaway: string | null;
+  ai_reason: string | null;
+  analyzed_at: string | null;
   article_slug: string | null;
   imported_at: string | null;
   created_at: string;
@@ -55,6 +59,10 @@ const rssItemFields = [
   "score",
   "duplicate_risk",
   "suggested_tags",
+  "ai_summary",
+  "founder_takeaway",
+  "ai_reason",
+  "analyzed_at",
   "article_slug",
   "imported_at",
   "created_at",
@@ -82,6 +90,10 @@ function mapRssItemRow(row: RssItemRow): RssCandidate {
     score: row.score,
     duplicateRisk: row.duplicate_risk,
     suggestedTags: row.suggested_tags ?? [],
+    aiSummary: row.ai_summary,
+    founderTakeaway: row.founder_takeaway,
+    aiReason: row.ai_reason,
+    analyzedAt: row.analyzed_at,
     articleSlug: row.article_slug,
     importedAt: row.imported_at,
     createdAt: row.created_at,
@@ -162,6 +174,48 @@ export async function updateRssCandidateStatus(
 
   if (!response.ok) {
     throw new Error(`RSS_ITEM_STATUS_FAILED_${response.status}`);
+  }
+
+  return true;
+}
+
+export async function updateRssCandidateAnalysis(
+  id: string,
+  input: {
+    aiSummary: string;
+    founderTakeaway: string;
+    aiReason: string;
+    relevanceScore: number;
+    founderValueScore: number;
+    freshnessScore: number;
+    score: number;
+    duplicateRisk: "low" | "medium" | "high";
+    suggestedTags: string[];
+  }
+) {
+  if (!isSupabaseConfigured()) return false;
+
+  const response = await supabaseFetch(`rss_items?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: {
+      Prefer: "return=minimal"
+    },
+    body: JSON.stringify({
+      ai_summary: input.aiSummary,
+      founder_takeaway: input.founderTakeaway,
+      ai_reason: input.aiReason,
+      relevance_score: input.relevanceScore,
+      founder_value_score: input.founderValueScore,
+      freshness_score: input.freshnessScore,
+      score: input.score,
+      duplicate_risk: input.duplicateRisk,
+      suggested_tags: input.suggestedTags,
+      analyzed_at: new Date().toISOString()
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`RSS_ITEM_ANALYSIS_FAILED_${response.status}`);
   }
 
   return true;

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import {
+  analyzeRssCandidateAction,
   createArticleFromRssCandidateAction,
   setRssCandidateStatusAction
 } from "@/app/admin/actions";
@@ -94,7 +95,8 @@ export default async function AdminRssPage({ searchParams }: Props) {
     "invalid-rss-status": "候选状态无效。",
     "invalid-rss-item": "RSS 候选 ID 无效。",
     "rss-item-not-found": "没有找到这条 RSS 候选。",
-    "rss-import-failed": "生成文章草稿失败，请稍后重试。"
+    "rss-import-failed": "生成文章草稿失败，请稍后重试。",
+    "rss-ai-failed": "AI 初筛失败，请检查 DeepSeek 配置或稍后重试。"
   };
 
   return (
@@ -202,8 +204,18 @@ export default async function AdminRssPage({ searchParams }: Props) {
                   {item.title}
                 </h2>
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--secondary)]">
-                  {item.description || "暂无摘要。"}
+                  {item.aiSummary || item.description || "暂无摘要。"}
                 </p>
+                {item.founderTakeaway ? (
+                  <p className="mt-3 rounded-[0.9rem] border border-[rgba(138,106,82,0.14)] bg-[rgba(255,255,255,0.48)] px-3 py-2 text-sm leading-6 text-[var(--foreground)]">
+                    {item.founderTakeaway}
+                  </p>
+                ) : null}
+                {item.aiReason ? (
+                  <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
+                    AI 判断：{item.aiReason}
+                  </p>
+                ) : null}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {item.suggestedTags.slice(0, 5).map((tag) => (
                     <span
@@ -220,6 +232,7 @@ export default async function AdminRssPage({ searchParams }: Props) {
                 <p>{item.publishedAt ? formatDate(item.publishedAt) : "未知日期"}</p>
                 <p>综合评分：{item.score ?? "待评分"}</p>
                 <p>价值：{item.founderValueScore ?? "-"}</p>
+                <p>{item.analyzedAt ? "已 AI 初筛" : "未 AI 初筛"}</p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 lg:justify-end">
@@ -240,6 +253,16 @@ export default async function AdminRssPage({ searchParams }: Props) {
                   </Link>
                 ) : (
                   <>
+                    <form action={analyzeRssCandidateAction}>
+                      <input type="hidden" name="id" value={item.id} />
+                      <input type="hidden" name="returnTo" value={returnTo} />
+                      <button
+                        type="submit"
+                        className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
+                      >
+                        AI 初筛
+                      </button>
+                    </form>
                     {item.status !== "selected" ? (
                       <form action={setRssCandidateStatusAction}>
                         <input type="hidden" name="id" value={item.id} />
