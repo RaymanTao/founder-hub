@@ -121,6 +121,11 @@ export default async function AdminRssPage({ searchParams }: Props) {
         </Link>
       </div>
 
+      <div className="mt-5 flex items-center justify-between rounded-[1rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] px-4 py-3 text-sm">
+        <span className="text-[var(--secondary)]">RSS 来源由后台维护，Cron 会优先读取 Supabase 配置。</span>
+        <Link href="/admin/rss/sources" className="font-medium text-[var(--accent)]">管理来源 →</Link>
+      </div>
+
       <form
         action="/admin/rss"
         className="mt-8 grid gap-3 rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] p-4 lg:grid-cols-[1fr_160px_160px_auto]"

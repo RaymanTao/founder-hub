@@ -342,6 +342,46 @@ for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');
 
+create table if not exists public.rss_feeds (
+  id text primary key,
+  title text not null,
+  url text not null,
+  category text not null check (category in ('Build', 'AI', 'Growth', 'Solopreneur')),
+  type text not null check (
+    type in (
+      'Tutorial',
+      'Case Study',
+      'Essay',
+      'Build Log',
+      'Product Review',
+      'Founder Analysis',
+      'Experiment'
+    )
+  ),
+  language text not null default 'zh-CN',
+  tags jsonb not null default '[]'::jsonb,
+  trust_score integer not null default 70 check (trust_score between 0 and 100),
+  enabled boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists rss_feeds_enabled_idx on public.rss_feeds (enabled);
+
+drop trigger if exists rss_feeds_set_updated_at on public.rss_feeds;
+create trigger rss_feeds_set_updated_at
+before update on public.rss_feeds
+for each row execute function public.set_updated_at();
+
+alter table public.rss_feeds enable row level security;
+
+drop policy if exists "Service role can manage rss feeds" on public.rss_feeds;
+create policy "Service role can manage rss feeds"
+on public.rss_feeds
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
 create table if not exists public.resources (
   id text primary key,
   title text not null,

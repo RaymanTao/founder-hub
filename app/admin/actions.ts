@@ -28,6 +28,7 @@ import {
   updateRssCandidateStatus
 } from "@/lib/rss-items";
 import { analyzeRssCandidate } from "@/lib/rss-ai";
+import { deleteRssFeed, saveRssFeed } from "@/lib/rss-feeds";
 import { getArticleBySlug } from "@/lib/writing";
 import type { ArticleAccess, ArticleCategory, ArticleType } from "@/types/article";
 import type { Resource } from "@/types/resource";
@@ -245,6 +246,51 @@ export async function analyzeRssCandidateAction(formData: FormData) {
   }
 
   redirect(returnTo);
+}
+
+export async function saveRssFeedAction(formData: FormData) {
+  await requireAdmin();
+  const id = requireString(formData, "id");
+  const title = requireString(formData, "title");
+  const url = requireString(formData, "url");
+  const category = requireString(formData, "category") as ArticleCategory;
+  const type = requireString(formData, "type") as ArticleType;
+  const language = requireString(formData, "language") || "zh-CN";
+  const tags = requireString(formData, "tags").split(",").map((tag) => tag.trim()).filter(Boolean);
+
+  try {
+    const parsed = new URL(url);
+    if (!id || !title || !["http:", "https:"].includes(parsed.protocol) || !categoryValues.includes(category) || !typeValues.includes(type)) {
+      throw new Error("invalid");
+    }
+    await saveRssFeed({
+      id,
+      title,
+      url,
+      category,
+      type,
+      language,
+      tags,
+      trustScore: Math.max(0, Math.min(100, Number(requireString(formData, "trustScore") || 70))),
+      enabled: formData.get("enabled") === "on"
+    });
+  } catch {
+    redirect("/admin/rss/sources?error=invalid-feed");
+  }
+
+  redirect("/admin/rss/sources?saved=1");
+}
+
+export async function deleteRssFeedAction(formData: FormData) {
+  await requireAdmin();
+  const id = requireString(formData, "id");
+  if (!id) redirect("/admin/rss/sources?error=invalid-feed");
+  try {
+    await deleteRssFeed(id);
+  } catch {
+    redirect("/admin/rss/sources?error=delete-failed");
+  }
+  redirect("/admin/rss/sources?deleted=1");
 }
 
 function getResourceInput(formData: FormData) {

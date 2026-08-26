@@ -1,10 +1,10 @@
-import rssFeeds from "@/data/rss-feeds.json";
 import { analyzeRssCandidate } from "@/lib/rss-ai";
+import { getRssFeeds } from "@/lib/rss-feeds";
 import { isSupabaseConfigured, supabaseFetch } from "@/lib/supabase";
 import type { ArticleCategory, ArticleType } from "@/types/article";
 import type { RssCandidate } from "@/types/rss";
 
-type Feed = (typeof rssFeeds)[number];
+type Feed = Awaited<ReturnType<typeof getRssFeeds>>[number];
 
 function decodeXml(input: string) {
   return input
@@ -104,7 +104,7 @@ function toCandidate(item: ReturnType<typeof getItems>[number], feed: Feed): Rss
 
 export async function importRssCandidates(limit = 5) {
   if (!isSupabaseConfigured()) throw new Error("SUPABASE_NOT_CONFIGURED");
-  const feeds = rssFeeds.filter((feed) => feed.enabled && feed.url);
+  const feeds = (await getRssFeeds()).filter((feed) => feed.enabled && feed.url);
   let feedCount = 0;
   let itemCount = 0;
 
