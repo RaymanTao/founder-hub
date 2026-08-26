@@ -39,9 +39,7 @@ export default async function ResourcesPage() {
               <span>/</span>
               <span>{resource.status}</span>
             </div>
-            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-              {resource.title}
-            </h2>
+            <Link href={`/resources/${resource.id}`}><h2 className="mt-4 text-2xl font-semibold tracking-tight text-[var(--foreground)]">{resource.title}</h2></Link>
             <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
               {resource.description}
             </p>
@@ -59,7 +57,7 @@ export default async function ResourcesPage() {
                 </span>
               ))}
             </div>
-            {resource.status === "Free" ? (
+            {resource.access === "Member" ? <Link href={`/resources/${resource.id}`} className="mt-6 block border-t border-[var(--border)] pt-5 text-sm font-medium text-[var(--accent)]">会员专属 · 解锁详情 →</Link> : resource.status === "Free" ? (
               <div className="mt-6 border-t border-[var(--border)] pt-5">
                 <ResourceClaimForm resourceId={resource.id} />
               </div>
@@ -91,7 +89,7 @@ export default async function ResourcesPage() {
                 </p>
               </div>
               <div className="min-w-[260px]">
-                {resource.status === "Free" ? (
+                {resource.access === "Member" ? <Link href={`/resources/${resource.id}`} className="text-sm font-medium text-[var(--accent)]">会员专属 · 查看详情 →</Link> : resource.status === "Free" ? (
                   <ResourceClaimForm resourceId={resource.id} />
                 ) : (
                   <span className="text-sm text-[var(--muted)]">即将开放</span>

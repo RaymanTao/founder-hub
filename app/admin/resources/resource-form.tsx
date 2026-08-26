@@ -9,6 +9,7 @@ const categoryOptions: Resource["category"][] = [
   "Checklist"
 ];
 const statusOptions: Resource["status"][] = ["Free", "Coming Soon"];
+const accessOptions: Resource["access"][] = ["Free", "Member"];
 
 function Field({
   label,
@@ -87,6 +88,12 @@ export function ResourceForm({ resource }: { resource?: Resource }) {
                   {item}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="block text-sm font-medium text-[var(--foreground)]">
+            权限
+            <select name="access" defaultValue={resource?.access ?? "Free"} className="mt-2 min-h-11 w-full rounded-[1rem] border border-[var(--border)] bg-[rgba(255,255,255,0.78)] px-4 outline-none transition focus:border-[var(--accent)]">
+              {accessOptions.map((item) => <option key={item} value={item}>{item === "Member" ? "会员专属" : "免费"}</option>)}
             </select>
           </label>
         </div>

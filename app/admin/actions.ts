@@ -54,6 +54,7 @@ const resourceCategoryValues: Resource["category"][] = [
   "Checklist"
 ];
 const resourceStatusValues: Resource["status"][] = ["Free", "Coming Soon"];
+const resourceAccessValues: Resource["access"][] = ["Free", "Member"];
 const rssStatusValues: RssItemStatus[] = ["pending", "selected", "rejected", "imported"];
 
 function requireString(formData: FormData, key: string) {
@@ -325,8 +326,9 @@ export async function runRssImportAction() {
 function getResourceInput(formData: FormData) {
   const category = requireString(formData, "category") as Resource["category"];
   const status = requireString(formData, "status") as Resource["status"];
+  const access = requireString(formData, "access") as Resource["access"];
 
-  if (!resourceCategoryValues.includes(category) || !resourceStatusValues.includes(status)) {
+  if (!resourceCategoryValues.includes(category) || !resourceStatusValues.includes(status) || !resourceAccessValues.includes(access)) {
     return null;
   }
 
@@ -335,6 +337,7 @@ function getResourceInput(formData: FormData) {
     description: requireString(formData, "description"),
     category,
     status,
+    access,
     format: requireString(formData, "format"),
     audience: requireString(formData, "audience"),
     href: requireString(formData, "href"),

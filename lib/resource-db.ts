@@ -7,6 +7,7 @@ type ResourceRow = {
   description: string;
   category: Resource["category"];
   status: Resource["status"];
+  access: Resource["access"];
   format: string;
   audience: string;
   href: string;
@@ -23,6 +24,7 @@ const resourceFields = [
   "description",
   "category",
   "status",
+  "access",
   "format",
   "audience",
   "href",
@@ -107,6 +109,7 @@ export async function upsertSupabaseResource(id: string, input: ResourceWriteInp
       description: input.description,
       category: input.category,
       status: input.status,
+      access: input.access,
       format: input.format,
       audience: input.audience,
       href: input.href,

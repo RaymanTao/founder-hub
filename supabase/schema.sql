@@ -408,6 +408,7 @@ create table if not exists public.resources (
   description text not null,
   category text not null check (category in ('Toolkit', 'Template', 'Workflow', 'Checklist')),
   status text not null check (status in ('Free', 'Coming Soon')),
+  access text not null default 'Free' check (access in ('Free', 'Member')),
   format text not null,
   audience text not null,
   href text not null,
@@ -417,6 +418,10 @@ create table if not exists public.resources (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.resources add column if not exists access text not null default 'Free';
+alter table public.resources drop constraint if exists resources_access_check;
+alter table public.resources add constraint resources_access_check check (access in ('Free', 'Member'));
 
 create index if not exists resources_featured_idx
   on public.resources (featured);

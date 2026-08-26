@@ -4,6 +4,7 @@ export type Resource = {
   description: string;
   category: "Toolkit" | "Template" | "Workflow" | "Checklist";
   status: "Free" | "Coming Soon";
+  access: "Free" | "Member";
   format: string;
   audience: string;
   href: string;

@@ -5,6 +5,7 @@ import type { Resource } from "@/types/resource";
 function normalizeResource(resource: Resource) {
   return {
     ...resource,
+    access: resource.access === "Member" ? "Member" : "Free",
     archived: resource.archived === true
   };
 }
