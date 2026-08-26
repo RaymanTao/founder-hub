@@ -196,8 +196,7 @@ export default async function HomePage({
     : articles;
   const featuredArticle = filteredArticles.find((item) => item.featured) ?? filteredArticles[0];
   const latestArticles = filteredArticles
-    .filter((item) => item.slug !== featuredArticle?.slug)
-    .slice(0, 12);
+    .filter((item) => item.slug !== featuredArticle?.slug);
 
   return (
     <main className="min-h-screen bg-[#F3ECE2] px-3 pb-12 pt-11 text-[#171311] sm:px-4">
