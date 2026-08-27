@@ -7,7 +7,7 @@ Founder Hub uses Supabase for structured data and Cloudflare R2 for media assets
 Set these environment variables in production:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 CRON_SECRET=
@@ -28,6 +28,11 @@ Current tables:
 - `media_assets`
 
 All tables use RLS and are managed through the service role from server-side routes.
+
+`NEXT_PUBLIC_SUPABASE_URL` must be the HTTP Project URL from Supabase Project Settings
+→ API, such as `https://your-project-ref.supabase.co`. Do not put a PostgreSQL
+connection string beginning with `postgresql://` in this variable; that string belongs
+only in database tools and cannot be used by the REST API.
 
 ### Supabase Auth
 

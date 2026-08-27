@@ -5,13 +5,23 @@ export function getSupabaseConfig() {
   };
 }
 
+function isHttpUrl(value: string) {
+  return value.startsWith("https://") || value.startsWith("http://");
+}
+
 export function isSupabaseConfigured() {
   const config = getSupabaseConfig();
-  return Boolean(config.url && config.serviceRoleKey);
+  return Boolean(config.url && isHttpUrl(config.url) && config.serviceRoleKey);
 }
 
 export async function supabaseFetch(path: string, init: RequestInit = {}) {
   const config = getSupabaseConfig();
+
+  if (!isHttpUrl(config.url)) {
+    throw new Error(
+      "INVALID_SUPABASE_URL: NEXT_PUBLIC_SUPABASE_URL must be the Supabase Project URL, not a postgresql connection string."
+    );
+  }
 
   return fetch(`${config.url}/rest/v1/${path}`, {
     cache: "no-store",
