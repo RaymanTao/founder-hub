@@ -205,3 +205,7 @@ Resource downloads go through `/api/resources/download/[id]`. Free resources red
 through this server endpoint, while member resources remain locked until membership
 verification is implemented. Do not put private download URLs directly in public page
 markup; use R2 signed URLs or a protected provider endpoint for member-only files.
+
+Member-only downloads are checked against the `memberships` table by email. Until a
+payment provider is connected, memberships can be granted manually in Supabase for
+testing; payment webhooks should later create or update these rows.

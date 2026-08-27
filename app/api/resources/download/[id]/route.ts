@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getReaderEmail } from "@/lib/reader-auth";
 import { getAllResources } from "@/lib/resources";
+import { hasActiveMembership } from "@/lib/memberships";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (resource.access === "Member") {
     const email = await getReaderEmail();
     if (!email) return NextResponse.json({ message: "请先登录后再解锁会员资源" }, { status: 401 });
-    return NextResponse.json({ message: "会员权限校验接口已就绪，订阅会员后开放下载" }, { status: 403 });
+    if (!(await hasActiveMembership(email))) return NextResponse.json({ message: "当前账号还没有有效会员权限" }, { status: 403 });
   }
 
   if (!resource.href) return NextResponse.json({ message: "资源下载地址尚未配置" }, { status: 404 });
