@@ -144,6 +144,12 @@ function extractPageMeta(html: string, url: string) {
   };
 }
 
+function removeUndefined<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined)
+  ) as T;
+}
+
 async function writeArticle(slug: string, meta: ArticleMeta, body: string) {
   if (shouldWriteArticlesToSupabase()) {
     await upsertSupabaseArticle({
@@ -154,7 +160,7 @@ async function writeArticle(slug: string, meta: ArticleMeta, body: string) {
     return;
   }
 
-  const next = matter.stringify(`${body.trim()}\n`, meta);
+  const next = matter.stringify(`${body.trim()}\n`, removeUndefined(meta));
   await fs.writeFile(path.join(contentDir, `${slug}.mdx`), next, "utf8");
 }
 
@@ -185,7 +191,7 @@ export async function updateArticle(slug: string, update: ArticleMetaUpdate, bod
   }
 
   const filePath = path.join(contentDir, `${slug}.mdx`);
-  const next = matter.stringify(`${body.trim()}\n`, nextData);
+  const next = matter.stringify(`${body.trim()}\n`, removeUndefined(nextData));
   await fs.writeFile(filePath, next, "utf8");
 }
 

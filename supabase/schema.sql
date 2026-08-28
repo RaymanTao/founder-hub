@@ -1,21 +1,108 @@
 create extension if not exists pgcrypto;
 
+create table if not exists public.profiles (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  display_name text not null,
+  avatar_url text,
+  provider text not null default 'email',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists profiles_email_idx on public.profiles (email);
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "Service role can manage profiles" on public.profiles;
+create policy "Service role can manage profiles"
+on public.profiles for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
 create table if not exists public.newsletter_subscribers (
   id uuid primary key default gen_random_uuid(),
   email text not null unique,
   source text not null,
-  status text not null default 'active' check (status in ('active', 'unsubscribed')),
+  status text not null default 'pending' check (status in ('pending', 'active', 'unsubscribed')),
   subscribed_at timestamptz not null default now(),
   unsubscribed_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
+alter table public.newsletter_subscribers
+  drop constraint if exists newsletter_subscribers_status_check;
+
+alter table public.newsletter_subscribers
+  add constraint newsletter_subscribers_status_check
+  check (status in ('pending', 'active', 'unsubscribed'));
+
 create index if not exists newsletter_subscribers_status_idx
   on public.newsletter_subscribers (status);
 
 create index if not exists newsletter_subscribers_source_idx
   on public.newsletter_subscribers (source);
+
+create table if not exists public.newsletter_campaigns (
+  id uuid primary key default gen_random_uuid(),
+  subject text not null,
+  html text not null,
+  status text not null default 'draft' check (status in ('draft', 'scheduled', 'sending', 'sent', 'failed')),
+  sent_count integer not null default 0,
+  failed_count integer not null default 0,
+  retry_count integer not null default 0,
+  created_at timestamptz not null default now(),
+  sent_at timestamptz,
+  scheduled_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.newsletter_campaigns
+  add column if not exists retry_count integer not null default 0,
+  add column if not exists scheduled_at timestamptz;
+
+alter table public.newsletter_campaigns
+  drop constraint if exists newsletter_campaigns_status_check;
+
+alter table public.newsletter_campaigns
+  add constraint newsletter_campaigns_status_check
+  check (status in ('draft', 'scheduled', 'sending', 'sent', 'failed'));
+
+create index if not exists newsletter_campaigns_created_at_idx
+  on public.newsletter_campaigns (created_at desc);
+
+create table if not exists public.newsletter_templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  subject text not null,
+  html text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists newsletter_templates_created_at_idx
+  on public.newsletter_templates (created_at desc);
+
+alter table public.newsletter_templates enable row level security;
+
+drop policy if exists "Service role can manage newsletter templates"
+  on public.newsletter_templates;
+
+create policy "Service role can manage newsletter templates"
+on public.newsletter_templates for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
+alter table public.newsletter_campaigns enable row level security;
+
+drop policy if exists "Service role can manage newsletter campaigns"
+  on public.newsletter_campaigns;
+
+create policy "Service role can manage newsletter campaigns"
+on public.newsletter_campaigns for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
 
 create or replace function public.set_updated_at()
 returns trigger as $$
@@ -25,11 +112,32 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists profiles_set_updated_at on public.profiles;
+create trigger profiles_set_updated_at
+before update on public.profiles
+for each row execute function public.set_updated_at();
+
 drop trigger if exists newsletter_subscribers_set_updated_at
   on public.newsletter_subscribers;
 
 create trigger newsletter_subscribers_set_updated_at
 before update on public.newsletter_subscribers
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists newsletter_campaigns_set_updated_at
+  on public.newsletter_campaigns;
+
+create trigger newsletter_campaigns_set_updated_at
+before update on public.newsletter_campaigns
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists newsletter_templates_set_updated_at
+  on public.newsletter_templates;
+
+create trigger newsletter_templates_set_updated_at
+before update on public.newsletter_templates
 for each row
 execute function public.set_updated_at();
 

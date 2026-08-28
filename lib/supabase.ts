@@ -1,7 +1,8 @@
 export function getSupabaseConfig() {
   return {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") ?? "",
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
+    serviceRoleKey:
+      process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? ""
   };
 }
 
@@ -14,6 +15,10 @@ export function isSupabaseConfigured() {
   return Boolean(config.url && isHttpUrl(config.url) && config.serviceRoleKey);
 }
 
+function isJwt(value: string) {
+  return value.split(".").length === 3;
+}
+
 export async function supabaseFetch(path: string, init: RequestInit = {}) {
   const config = getSupabaseConfig();
 
@@ -23,14 +28,16 @@ export async function supabaseFetch(path: string, init: RequestInit = {}) {
     );
   }
 
+  const headers: HeadersInit = {
+    apikey: config.serviceRoleKey,
+    "Content-Type": "application/json",
+    ...(isJwt(config.serviceRoleKey) ? { Authorization: `Bearer ${config.serviceRoleKey}` } : {}),
+    ...(init.headers ?? {})
+  };
+
   return fetch(`${config.url}/rest/v1/${path}`, {
     cache: "no-store",
     ...init,
-    headers: {
-      apikey: config.serviceRoleKey,
-      Authorization: `Bearer ${config.serviceRoleKey}`,
-      "Content-Type": "application/json",
-      ...(init.headers ?? {})
-    }
+    headers
   });
 }

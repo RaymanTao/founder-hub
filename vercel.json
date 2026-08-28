@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/rss-import",
       "schedule": "17 1 * * *"
+    },
+    {
+      "path": "/api/cron/newsletter",
+      "schedule": "0 * * * *"
     }
   ]
 }

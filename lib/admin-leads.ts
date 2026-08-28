@@ -4,7 +4,7 @@ export type NewsletterSubscriber = {
   id: string;
   email: string;
   source: string;
-  status: "active" | "unsubscribed";
+  status: "pending" | "active" | "unsubscribed";
   subscribed_at: string;
 };
 

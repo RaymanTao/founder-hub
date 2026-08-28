@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
-import { deleteRssFeedAction, saveRssFeedAction, testRssFeedAction } from "@/app/admin/actions";
+import { deleteRssFeedAction, importRssOpmlAction, saveRssFeedAction, testRssFeedAction } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getRssFeeds } from "@/lib/rss-feeds";
 import type { ArticleCategory, ArticleType } from "@/types/article";
@@ -17,14 +17,20 @@ export default async function RssSourcesPage({ searchParams }: { searchParams?: 
   const feeds = await getRssFeeds();
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex items-end justify-between gap-4 border-b border-[var(--border)] pb-8">
-        <div><p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">RSS Sources</p><h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">RSS 来源管理</h1><p className="mt-3 text-sm text-[var(--secondary)]">维护抓取地址、分类、可信度和启用状态。</p></div>
-        <Link href="/admin/rss" className="rounded-full border border-[var(--border)] px-5 py-2 text-sm">返回候选池</Link>
-      </div>
       {params.error ? <p className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700">{params.error === "delete-failed" ? "删除失败，请确认已执行数据库迁移。" : "请检查来源信息。"}</p> : null}
       {params.saved || params.deleted ? <p className="mt-5 rounded-xl bg-green-50 p-4 text-sm text-green-700">操作已完成。</p> : null}
+      {params.imported ? <p className="mt-5 rounded-xl bg-green-50 p-4 text-sm text-green-700">已发现 {params.found ?? 0} 个来源，新增 {params.imported} 个。新来源默认关闭，请测试后再启用。</p> : null}
       {params.test ? <p className={`mt-5 rounded-xl p-4 text-sm ${params.test === "ok" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{params.test === "ok" ? `连接成功（HTTP ${params.status ?? 200}）。` : "连接失败，请检查地址或来源是否支持 RSS。"}</p> : null}
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
+        <form action={importRssOpmlAction} className="rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-5 lg:col-span-2">
+          <h2 className="text-lg font-semibold">批量导入 OPML</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--secondary)]">支持上传 `.opml` 文件或粘贴 OPML 内容。导入后来源默认关闭，请先测试连接，再开启自动抓取。</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <input name="file" type="file" accept=".opml,.xml,text/xml,application/xml" className="field file:mr-3 file:border-0 file:bg-transparent file:text-sm" />
+            <textarea name="opml" rows={3} placeholder="也可以把 OPML XML 粘贴到这里" className="field min-h-28 rounded-2xl py-3" />
+          </div>
+          <button className="mt-4 rounded-full bg-[var(--foreground)] px-5 py-2 text-sm font-medium text-white">导入订阅源</button>
+        </form>
         <form action={saveRssFeedAction} className="rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-5">
           <h2 className="text-lg font-semibold">新增来源</h2>
           <div className="mt-4 grid gap-3">

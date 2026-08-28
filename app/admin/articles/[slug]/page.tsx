@@ -1,12 +1,9 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  completeArticleTemplateAction,
-  generateArticleDraftAction,
-  saveArticleMeta
-} from "@/app/admin/actions";
+import { saveArticleMeta } from "@/app/admin/actions";
 import { ArticleCoverField } from "@/app/admin/articles/[slug]/article-cover-field";
+import { MarkdownEditor } from "@/app/admin/articles/markdown-editor";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listMediaAssets } from "@/lib/media-assets";
 import { getArticleBySlug } from "@/lib/writing";
@@ -120,61 +117,6 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
 
   return (
     <main className="mx-auto max-w-[920px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-          >
-            返回后台
-          </Link>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            编辑文章
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-            在这里维护 frontmatter 和正文内容。采集来的第三方内容默认是草稿，请补充自己的解读后再发布。
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <form action={generateArticleDraftAction}>
-            <input type="hidden" name="slug" value={article.slug} />
-            <button
-              type="submit"
-              className="rounded-full bg-[var(--foreground)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
-            >
-              AI 生成初稿
-            </button>
-          </form>
-          <form action={completeArticleTemplateAction}>
-            <input type="hidden" name="slug" value={article.slug} />
-            <button
-              type="submit"
-              className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-            >
-              补全解读模板
-            </button>
-          </form>
-          <Link
-            href={`/admin/articles/${article.slug}/preview`}
-            className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-          >
-            预览草稿
-          </Link>
-          <Link
-            href={`/admin/articles/${article.slug}/revisions`}
-            className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-          >
-            版本历史
-          </Link>
-          <Link
-            href={`/writing/${article.slug}`}
-            className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-          >
-            查看前台
-          </Link>
-        </div>
-      </div>
-
       {query.saved ? (
         <div className="mt-6 rounded-[1rem] border border-[rgba(74,106,84,0.2)] bg-[rgba(74,106,84,0.08)] p-4 text-sm text-[var(--success)]">
           已保存文章元数据。
@@ -236,11 +178,14 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
             />
           </label>
 
-          <div className="grid gap-5 md:grid-cols-3">
-            <Field label="编号" name="number" type="number" defaultValue={article.number} />
-            <Field label="日期" name="date" type="date" defaultValue={article.date} />
-            <Field label="阅读时间" name="readingTime" defaultValue={article.readingTime} />
-          </div>
+          <input type="hidden" name="number" value={article.number} />
+          <input type="hidden" name="date" value={article.date} />
+          <input type="hidden" name="readingTime" value={article.readingTime} />
+          <input type="hidden" name="source" value={article.source} />
+          <input type="hidden" name="sourceUrl" value={article.sourceUrl ?? ""} />
+          <input type="hidden" name="audioUrl" value={article.audioUrl ?? ""} />
+          <input type="hidden" name="verified" value={article.verified ? "on" : "off"} />
+          <input type="hidden" name="archived" value={article.archived ? "on" : "off"} />
 
           <div className="grid gap-5 md:grid-cols-3">
             <SelectField
@@ -263,17 +208,6 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
             />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <Field label="来源" name="source" defaultValue={article.source} />
-            <Field
-              label="来源链接"
-              name="sourceUrl"
-              type="url"
-              required={false}
-              defaultValue={article.sourceUrl}
-            />
-          </div>
-
           <Field
             label="标签"
             name="tags"
@@ -281,25 +215,16 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
             help="多个标签用英文逗号分隔。"
           />
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <Field
-              label="音频链接"
-              name="audioUrl"
-              type="url"
-              required={false}
-              defaultValue={article.audioUrl}
+          <div>
+            <ArticleCoverField
+              defaultValue={article.cover}
+              mediaAssets={mediaAssets.map((asset) => ({
+                id: asset.id,
+                key: asset.key,
+                url: asset.url,
+                alt: asset.alt
+              }))}
             />
-            <div className="md:col-span-2">
-              <ArticleCoverField
-                defaultValue={article.cover}
-                mediaAssets={mediaAssets.map((asset) => ({
-                  id: asset.id,
-                  key: asset.key,
-                  url: asset.url,
-                  alt: asset.alt
-                }))}
-              />
-            </div>
           </div>
 
           <div className="flex flex-wrap gap-5 border-t border-[var(--border)] pt-5">
@@ -311,30 +236,12 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
               <input name="published" type="checkbox" defaultChecked={article.published} />
               发布到前台
             </label>
-            <label className="inline-flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
-              <input name="archived" type="checkbox" defaultChecked={article.archived} />
-              归档隐藏
-            </label>
-            <label className="inline-flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
-              <input name="verified" type="checkbox" defaultChecked={article.verified} />
-              已核对来源
-            </label>
           </div>
 
-          <label className="block border-t border-[var(--border)] pt-6 text-sm font-medium text-[var(--foreground)]">
-            正文 Markdown / MDX
-            <textarea
-              name="content"
-              required
-              defaultValue={article.content}
-              rows={24}
-              spellCheck={false}
-              className="mt-2 w-full rounded-[1rem] border border-[var(--border)] bg-[rgba(255,255,255,0.82)] px-4 py-3 font-mono text-sm leading-7 outline-none transition focus:border-[var(--accent)]"
-            />
-            <span className="mt-2 block text-xs leading-6 text-[var(--muted)]">
-              支持 Markdown 标题、列表、引用和代码块。AI 生成初稿会覆盖当前正文，保存后会写回当前内容源。
-            </span>
-          </label>
+          <div className="block border-t border-[var(--border)] pt-6 text-sm font-medium text-[var(--foreground)]">
+            <p>正文 Markdown / MDX</p>
+            <MarkdownEditor name="content" defaultValue={article.content} enableDraftChoice />
+          </div>
 
           <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-6 sm:flex-row">
             <button

@@ -1,9 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { logoutAdmin, setArticleArchivedAction } from "@/app/admin/actions";
+import { setArticleArchivedAction } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin-auth";
-import { getAllResources } from "@/lib/resources";
-import { listRssCandidates } from "@/lib/rss-items";
 import { formatDate } from "@/lib/utils";
 import { getAllArticles } from "@/lib/writing";
 import type { ArticleAccess, ArticleCategory } from "@/types/article";
@@ -14,6 +12,7 @@ type Props = {
     status?: string;
     category?: string;
     access?: string;
+    page?: string;
   }>;
 };
 
@@ -42,6 +41,7 @@ function buildAdminHref(params: {
   status?: string;
   category?: string;
   access?: string;
+  page?: number;
 }) {
   const query = new URLSearchParams();
   if (params.q) query.set("q", params.q);
@@ -50,6 +50,7 @@ function buildAdminHref(params: {
     query.set("category", params.category);
   }
   if (params.access && params.access !== "All") query.set("access", params.access);
+  if (params.page && params.page > 1) query.set("page", String(params.page));
   const qs = query.toString();
   return qs ? `/admin?${qs}` : "/admin";
 }
@@ -62,15 +63,8 @@ export default async function AdminPage({ searchParams }: Props) {
   const status = params.status ?? "All";
   const category = params.category ?? "All";
   const access = params.access ?? "All";
-  const [articles, resources, rssCandidates] = await Promise.all([
-    getAllArticles({ includeDrafts: true, includeArchived: true }),
-    getAllResources({ includeArchived: true }),
-    listRssCandidates({ status: "pending", limit: 1 })
-  ]);
-  const featuredCount = articles.filter((article) => article.featured).length;
-  const deepCount = articles.filter((article) => article.access === "Deep Dive").length;
-  const draftCount = articles.filter((article) => !article.published).length;
-  const archivedCount = articles.filter((article) => article.archived).length;
+  const requestedPage = Number.parseInt(params.page ?? "1", 10);
+  const articles = await getAllArticles({ includeDrafts: true, includeArchived: true });
   const filteredArticles = articles.filter((article) => {
     const haystack = [
       article.title,
@@ -95,90 +89,29 @@ export default async function AdminPage({ searchParams }: Props) {
     const accessMatch = access === "All" || article.access === access;
     return qMatch && statusMatch && categoryMatch && accessMatch;
   });
+  const pageSize = 10;
+  const pageCount = Math.max(1, Math.ceil(filteredArticles.length / pageSize));
+  const currentPage = Number.isFinite(requestedPage)
+    ? Math.min(Math.max(requestedPage, 1), pageCount)
+    : 1;
+  const paginatedArticles = filteredArticles.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
-            Admin
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            内容后台
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-            支持从第三方 URL 采集为草稿，也可以手动新建，并在后台完成正文编辑、预览和发布。
-          </p>
-        </div>
-        <form action={logoutAdmin}>
-          <button
-            type="submit"
-            className="min-h-11 rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-          >
-            退出登录
-          </button>
-        </form>
-      </div>
-
-      <div className="mt-8 grid gap-4 md:grid-cols-5">
-        {[
-          ["文章", articles.length, "/admin"],
-          ["精选", featuredCount, "/admin?status=Featured"],
-          ["深度", deepCount, "/admin?access=Deep+Dive"],
-          ["草稿", draftCount, "/admin?status=Draft"],
-          ["归档", archivedCount, "/admin?status=Archived"],
-          ["资源", resources.length, "/admin/resources"],
-          ["媒体", "R2", "/admin/media"],
-          ["RSS", rssCandidates ? "候选池" : "配置", "/admin/rss"]
-        ].map(([label, value, href]) => (
-          <Link
-            key={label}
-            href={String(href)}
-            className="rounded-[1.25rem] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft)]"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-              {label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-[var(--foreground)]">{value}</p>
-          </Link>
-        ))}
-      </div>
-
-      <section className="mt-10">
+      <section>
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
             文章管理
           </h2>
           <div className="flex items-center gap-4">
             <Link
-              href="/admin/insights"
-              className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-            >
-              内容洞察
-            </Link>
-            <Link
-              href="/admin/media"
-              className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-            >
-              媒体库
-            </Link>
-            <Link
-              href="/admin/leads"
-              className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-            >
-              查看线索
-            </Link>
-            <Link
               href="/admin/new"
               className="rounded-full bg-[var(--foreground)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
             >
-              新建 / 采集
-            </Link>
-            <Link
-                  href="/"
-              className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-            >
-              查看前台
+              新建文章
             </Link>
           </div>
         </div>
@@ -243,7 +176,10 @@ export default async function AdminPage({ searchParams }: Props) {
         </form>
 
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
-          <span>当前显示 {filteredArticles.length} 篇</span>
+          <span>
+            当前显示 {filteredArticles.length ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredArticles.length)} / 共 {filteredArticles.length} 篇
+          </span>
           {(q || status !== "All" || category !== "All" || access !== "All") ? (
             <Link
               href="/admin"
@@ -258,7 +194,7 @@ export default async function AdminPage({ searchParams }: Props) {
           {statusOptions.map((item) => (
             <Link
               key={item}
-              href={buildAdminHref({ q, status: item, category, access })}
+              href={buildAdminHref({ q, status: item, category, access, page: 1 })}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                 status === item
                   ? "border-[var(--foreground)] bg-[var(--foreground)] text-white"
@@ -279,7 +215,7 @@ export default async function AdminPage({ searchParams }: Props) {
         </div>
 
         <div className="mt-5 overflow-hidden rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)]">
-          {filteredArticles.map((article) => (
+          {paginatedArticles.map((article) => (
             <div
               key={article.slug}
               className="grid gap-4 border-b border-[var(--border)] p-5 last:border-b-0 lg:grid-cols-[1fr_180px_100px]"
@@ -345,7 +281,7 @@ export default async function AdminPage({ searchParams }: Props) {
                   <input
                     type="hidden"
                     name="returnTo"
-                    value={buildAdminHref({ q, status, category, access })}
+                    value={buildAdminHref({ q, status, category, access, page: currentPage })}
                   />
                   <button
                     type="submit"
@@ -363,6 +299,34 @@ export default async function AdminPage({ searchParams }: Props) {
             </div>
           ) : null}
         </div>
+
+        {pageCount > 1 ? (
+          <nav className="mt-5 flex flex-wrap items-center justify-center gap-2" aria-label="文章分页">
+            <Link
+              href={buildAdminHref({ q, status, category, access, page: currentPage - 1 })}
+              aria-disabled={currentPage === 1}
+              className={`rounded-full border px-3 py-2 text-sm ${currentPage === 1 ? "pointer-events-none opacity-40" : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)]"}`}
+            >
+              上一页
+            </Link>
+            {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
+              <Link
+                key={page}
+                href={buildAdminHref({ q, status, category, access, page })}
+                className={`grid h-9 w-9 place-items-center rounded-full border text-sm ${currentPage === page ? "border-[var(--foreground)] bg-[var(--foreground)] text-white" : "border-[var(--border)] bg-[var(--surface)] text-[var(--secondary)]"}`}
+              >
+                {page}
+              </Link>
+            ))}
+            <Link
+              href={buildAdminHref({ q, status, category, access, page: currentPage + 1 })}
+              aria-disabled={currentPage === pageCount}
+              className={`rounded-full border px-3 py-2 text-sm ${currentPage === pageCount ? "pointer-events-none opacity-40" : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)]"}`}
+            >
+              下一页
+            </Link>
+          </nav>
+        ) : null}
       </section>
     </main>
   );

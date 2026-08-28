@@ -3,7 +3,12 @@ import { getSupabaseConfig } from "@/lib/supabase";
 export function getSupabaseAuthConfig() {
   return {
     ...getSupabaseConfig(),
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
+    anonKey:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      process.env.SUPABASE_SECRET_KEY ??
+      ""
   };
 }
 

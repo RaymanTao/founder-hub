@@ -56,23 +56,6 @@ export default async function AdminLeadsPage() {
 
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-          >
-            返回后台
-          </Link>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            线索与订阅
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-            查看 Newsletter 订阅和资源领取记录，判断哪些内容正在带来真实读者关系。
-          </p>
-        </div>
-      </div>
-
       {!leads.configured ? (
         <div className="mt-8 rounded-[1.5rem] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-soft)]">
           <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">

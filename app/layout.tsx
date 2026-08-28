@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope, Noto_Sans_SC } from "next/font/google";
 import "@/app/globals.css";
-import { Footer } from "@/components/layout/footer";
-import { Navbar } from "@/components/layout/navbar";
+import { SiteChrome } from "@/components/layout/site-chrome";
 import { siteInfo } from "@/data/site";
 
 const manrope = Manrope({
@@ -36,13 +35,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <body
         className={`${manrope.variable} ${cormorant.variable} ${notoSansSC.variable} font-[var(--font-sans)] antialiased`}
       >
-        <Navbar />
-        <main className="bg-[#F3ECE2]">{children}</main>
-        <Footer />
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );

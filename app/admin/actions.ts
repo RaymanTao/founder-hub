@@ -28,7 +28,8 @@ import {
   updateRssCandidateStatus
 } from "@/lib/rss-items";
 import { analyzeRssCandidate } from "@/lib/rss-ai";
-import { deleteRssFeed, saveRssFeed } from "@/lib/rss-feeds";
+import { deleteRssFeed, getRssFeeds, saveRssFeed } from "@/lib/rss-feeds";
+import { parseOpml, rssFeedId } from "@/lib/rss-opml";
 import { finishRssRun, startRssRun, testRssFeedUrl } from "@/lib/rss-runs";
 import { importRssCandidates } from "@/lib/rss-import";
 import { getArticleBySlug } from "@/lib/writing";
@@ -146,18 +147,55 @@ export async function createManualArticle(formData: FormData) {
 
   const title = requireString(formData, "title");
   const description = requireString(formData, "description");
+  const category = requireString(formData, "category") as ArticleCategory;
   const type = requireString(formData, "type") as ArticleType;
+  const access = requireString(formData, "access") as ArticleAccess;
+  const content = requireString(formData, "content");
 
-  if (!title || !description || !typeValues.includes(type)) {
+  if (
+    !title ||
+    !description ||
+    !content ||
+    !categoryValues.includes(category) ||
+    !typeValues.includes(type) ||
+    !accessValues.includes(access)
+  ) {
     redirect("/admin/new?error=invalid-manual");
   }
 
   const slug = await createBlankArticle({ title, description, type });
+  const article = await getArticleBySlug(slug);
+
+  if (article) {
+    await updateArticle(
+      slug,
+      {
+        ...article,
+        title,
+        description,
+        category,
+        type,
+        access,
+        tags: requireString(formData, "tags")
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        featured: formData.get("featured") === "on",
+        published: formData.get("published") === "on",
+        cover: requireString(formData, "cover") || undefined
+      },
+      content
+    );
+  }
+
   redirect(`/admin/articles/${slug}?created=1`);
 }
 
 export async function importArticleFromUrl(formData: FormData) {
   await requireAdmin();
+
+  const requestedReturnTo = requireString(formData, "returnTo");
+  const returnTo = requestedReturnTo.startsWith("/") ? requestedReturnTo : "/admin/new";
 
   const url = requireString(formData, "url");
   let parsed: URL;
@@ -165,11 +203,11 @@ export async function importArticleFromUrl(formData: FormData) {
   try {
     parsed = new URL(url);
   } catch {
-    redirect("/admin/new?error=invalid-url");
+    redirect(`${returnTo}?error=invalid-url`);
   }
 
   if (!["http:", "https:"].includes(parsed.protocol) || isBlockedImportHost(parsed.hostname)) {
-    redirect("/admin/new?error=invalid-url");
+    redirect(`${returnTo}?error=invalid-url`);
   }
 
   let slug: string;
@@ -177,7 +215,7 @@ export async function importArticleFromUrl(formData: FormData) {
   try {
     slug = await createArticleFromUrl(parsed.toString());
   } catch {
-    redirect("/admin/new?error=import-failed");
+    redirect(`${returnTo}?error=import-failed`);
   }
 
   redirect(`/admin/articles/${slug}?imported=1`);
@@ -282,6 +320,43 @@ export async function saveRssFeedAction(formData: FormData) {
   }
 
   redirect("/admin/rss/sources?saved=1");
+}
+
+export async function importRssOpmlAction(formData: FormData) {
+  await requireAdmin();
+
+  const file = formData.get("file");
+  const pasted = requireString(formData, "opml");
+  const xml = file instanceof File ? await file.text() : pasted;
+  if (!xml.trim()) redirect("/admin/rss/sources?error=empty-opml");
+
+  let imported = 0;
+  let found = 0;
+  try {
+    const feeds = parseOpml(xml);
+    found = feeds.length;
+    const existing = await getRssFeeds();
+    const existingUrls = new Set(existing.map((feed) => feed.url.toLowerCase()));
+    for (const feed of feeds) {
+      if (existingUrls.has(feed.url.toLowerCase())) continue;
+      await saveRssFeed({
+        id: rssFeedId(feed.title, feed.url),
+        title: feed.title,
+        url: feed.url,
+        category: feed.category,
+        type: "Founder Analysis",
+        language: feed.language,
+        tags: feed.tags,
+        trustScore: 70,
+        enabled: false
+      });
+      existingUrls.add(feed.url.toLowerCase());
+      imported += 1;
+    }
+  } catch {
+    redirect("/admin/rss/sources?error=invalid-opml");
+  }
+  redirect(`/admin/rss/sources?imported=${imported}&found=${found}`);
 }
 
 export async function deleteRssFeedAction(formData: FormData) {

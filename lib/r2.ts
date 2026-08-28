@@ -51,7 +51,9 @@ export function isR2Configured() {
 
 export function getPublicR2Url(key: string) {
   const config = getR2Config();
-  return `${config.publicBaseUrl}/${encodeKey(key)}`;
+  const base = config.publicBaseUrl;
+  const needsBucketPath = base.includes(".r2.cloudflarestorage.com") && !base.endsWith(`/${config.bucket}`);
+  return `${base}${needsBucketPath ? `/${encodeURIComponent(config.bucket)}` : ""}/${encodeKey(key)}`;
 }
 
 export function createMediaKey(input: { prefix?: string; filename: string }) {

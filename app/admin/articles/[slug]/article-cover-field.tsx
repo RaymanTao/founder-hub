@@ -115,15 +115,11 @@ export function ArticleCoverField({
 
   return (
     <div className="grid gap-4">
-      <label className="block text-sm font-medium text-[var(--foreground)]">
-        封面路径
-        <input
-          name="cover"
-          value={cover}
-          onChange={(event) => setCover(event.target.value)}
-          className="mt-2 min-h-11 w-full rounded-[1rem] border border-[var(--border)] bg-[rgba(255,255,255,0.78)] px-4 outline-none transition focus:border-[var(--accent)]"
-        />
-      </label>
+      <input type="hidden" name="cover" value={cover} />
+      <div>
+        <p className="text-sm font-medium text-[var(--foreground)]">封面图片</p>
+        <p className="mt-1 text-xs text-[var(--muted)]">上传新图片或从媒体库中选择，图片地址由系统自动保存。</p>
+      </div>
 
       {cover ? (
         <div className="overflow-hidden rounded-[1rem] border border-[var(--border)] bg-[rgba(255,255,255,0.58)]">

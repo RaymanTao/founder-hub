@@ -42,24 +42,8 @@ export default async function AdminArticleRevisionDetailPage({
 
   return (
     <main className="mx-auto max-w-[920px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <Link
-            href={`/admin/articles/${article.slug}/revisions`}
-            className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-          >
-            返回版本列表
-          </Link>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            版本详情
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-            {formatDate(revision.created_at)} /{" "}
-            {new Date(revision.created_at).toLocaleTimeString("zh-CN")} /{" "}
-            {revision.created_by}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
+      <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-3">
           <form action={restoreArticleRevisionAction}>
             <input type="hidden" name="slug" value={article.slug} />
             <input type="hidden" name="revisionId" value={revision.id} />

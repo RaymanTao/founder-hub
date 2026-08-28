@@ -42,7 +42,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: "订阅成功，欢迎邮件已发送。"
+      message: subscription.confirmationSent
+        ? "确认邮件已发送，请点击邮件中的链接完成订阅。"
+        : "订阅已记录，但确认邮件服务尚未配置。"
     });
   } catch {
     return NextResponse.json(

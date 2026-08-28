@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listMediaAssets } from "@/lib/media-assets";
 import { isR2Configured } from "@/lib/r2";
@@ -27,24 +26,7 @@ export default async function AdminMediaPage() {
 
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-          >
-            返回后台
-          </Link>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            媒体库
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-            上传文章封面、采集图片和资源附件。图片文件存放在 Cloudflare R2，元数据登记在 Supabase。
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         {[
           ["R2 存储", r2Configured ? "已配置" : "未配置"],
           ["Supabase 记录", supabaseConfigured ? "已配置" : "未配置"],

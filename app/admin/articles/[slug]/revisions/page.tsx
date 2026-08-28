@@ -42,23 +42,6 @@ export default async function AdminArticleRevisionsPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-[920px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <Link
-            href={`/admin/articles/${article.slug}`}
-            className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-          >
-            返回编辑
-          </Link>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            文章版本
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-            {article.title}
-          </p>
-        </div>
-      </div>
-
       {revisions === null ? (
         <div className="mt-8 rounded-[1.25rem] border border-[var(--border)] bg-[var(--surface)] p-6 text-sm leading-7 text-[var(--secondary)] shadow-[var(--shadow-soft)]">
           当前内容源不是 Supabase。切换到 ARTICLE_CONTENT_SOURCE=supabase 后，后台保存会自动生成版本历史。

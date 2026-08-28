@@ -150,29 +150,6 @@ export default async function AdminInsightsPage() {
 
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-          >
-            返回后台
-          </Link>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            内容洞察
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-            汇总文章库存、收藏、资源领取和订阅来源，帮助你判断下一批内容该扩写、资源化还是优化入口。
-          </p>
-        </div>
-        <Link
-          href="/admin/leads"
-          className="min-h-11 rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-        >
-          查看线索
-        </Link>
-      </div>
-
       {!leads.configured ? (
         <div className="mt-8 rounded-[1.25rem] border border-[var(--border)] bg-[var(--surface)] p-5 text-sm leading-7 text-[var(--secondary)] shadow-[var(--shadow-soft)]">
           当前还没有配置 Supabase，页面会先展示文章库存洞察。配置数据库后，收藏、领取和订阅信号会自动合并进来。

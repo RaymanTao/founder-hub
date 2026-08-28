@@ -69,21 +69,13 @@ export default async function AdminResourcesPage({ searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-          >
-            返回后台
-          </Link>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            资源管理
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--secondary)]">
-            管理资源中心里的工具清单、模板、工作流和检查表。
-          </p>
+      {params.error ? (
+        <div className="mt-6 rounded-[1rem] border border-[rgba(143,78,69,0.2)] bg-[rgba(143,78,69,0.07)] p-4 text-sm text-[var(--danger)]">
+          操作失败：{params.error}
         </div>
+      ) : null}
+
+      <div className="flex justify-end">
         <Link
           href="/admin/resources/new"
           className="rounded-full bg-[var(--foreground)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
@@ -92,15 +84,9 @@ export default async function AdminResourcesPage({ searchParams }: Props) {
         </Link>
       </div>
 
-      {params.error ? (
-        <div className="mt-6 rounded-[1rem] border border-[rgba(143,78,69,0.2)] bg-[rgba(143,78,69,0.07)] p-4 text-sm text-[var(--danger)]">
-          操作失败：{params.error}
-        </div>
-      ) : null}
-
       <form
         action="/admin/resources"
-        className="mt-8 grid gap-3 rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] p-4 lg:grid-cols-[1fr_180px_180px_auto]"
+        className="mt-5 grid gap-3 rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] p-4 lg:grid-cols-[1fr_180px_180px_auto]"
       >
         <input
           name="q"

@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   analyzeRssCandidateAction,
   createArticleFromRssCandidateAction,
+  importArticleFromUrl,
   setRssCandidateStatusAction,
   runRssImportAction
 } from "@/app/admin/actions";
@@ -101,35 +102,25 @@ export default async function AdminRssPage({ searchParams }: Props) {
     "invalid-rss-item": "RSS 候选 ID 无效。",
     "rss-item-not-found": "没有找到这条 RSS 候选。",
     "rss-import-failed": "生成文章草稿失败，请稍后重试。",
-    "rss-ai-failed": "AI 初筛失败，请检查 DeepSeek 配置或稍后重试。"
+    "rss-ai-failed": "AI 初筛失败，请检查 DeepSeek 配置或稍后重试。",
+    "invalid-url": "请输入有效的 http 或 https 链接。",
+    "import-failed": "采集失败，目标网站可能阻止访问或没有可读取的页面信息。"
   };
 
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
-            RSS Intake
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-            RSS 候选池
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--secondary)]">
-            第三方 RSS 会先进入候选池，完成去重、评分和人工判断后，再生成自己的创业情报文章。
-          </p>
-        </div>
-        <Link
-          href="/admin"
-          className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 py-2 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-        >
-          返回后台
-        </Link>
-      </div>
-
-      <div className="mt-5 flex items-center justify-between rounded-[1rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] px-4 py-3 text-sm">
+      <div className="flex items-center justify-between rounded-[1rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] px-4 py-3 text-sm">
         <span className="text-[var(--secondary)]">RSS 来源由后台维护，Cron 会优先读取 Supabase 配置。</span>
         <Link href="/admin/rss/sources" className="font-medium text-[var(--accent)]">管理来源 →</Link>
       </div>
+
+      <form action={importArticleFromUrl} className="mt-5 rounded-[1rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] p-4">
+        <input type="hidden" name="returnTo" value="/admin/rss" />
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input name="url" type="url" required placeholder="手动采集文章 URL" className="min-h-11 min-w-0 flex-1 rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.78)] px-4 text-sm outline-none transition focus:border-[var(--accent)]" />
+          <button type="submit" className="min-h-11 rounded-full bg-[var(--foreground)] px-5 text-sm font-medium text-white transition hover:bg-[var(--accent)]">采集为草稿</button>
+        </div>
+      </form>
 
       <form
         action="/admin/rss"
