@@ -15,16 +15,15 @@ export type MediaAsset = {
 
 export async function listMediaAssets() {
   if (!isSupabaseConfigured()) return [] as MediaAsset[];
-
-  const response = await supabaseFetch(
-    "media_assets?select=id,key,url,bucket,content_type,size_bytes,alt,source_url,context,created_at&order=created_at.desc&limit=100"
-  );
-
-  if (!response.ok) {
-    throw new Error(`MEDIA_ASSETS_LIST_FAILED_${response.status}`);
+  try {
+    const response = await supabaseFetch(
+      "media_assets?select=id,key,url,bucket,content_type,size_bytes,alt,source_url,context,created_at&order=created_at.desc&limit=100"
+    );
+    if (!response.ok) return [];
+    return (await response.json()) as MediaAsset[];
+  } catch {
+    return [];
   }
-
-  return (await response.json()) as MediaAsset[];
 }
 
 export async function createMediaAsset(input: {

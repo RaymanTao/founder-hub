@@ -8,6 +8,8 @@ export type Resource = {
   format: string;
   audience: string;
   href: string;
+  cover?: string;
+  accessCode?: string;
   featured: boolean;
   archived: boolean;
   tags: string[];

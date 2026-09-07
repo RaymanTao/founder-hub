@@ -386,7 +386,9 @@ create table if not exists public.rss_items (
   title text not null,
   url text not null,
   canonical_url text not null unique,
-  description text,
+    description text,
+    content text,
+    images jsonb not null default '[]'::jsonb,
   published_at timestamptz,
   category text not null check (category in ('Build', 'AI', 'Growth', 'Solopreneur')),
   type text not null check (
@@ -417,7 +419,10 @@ create table if not exists public.rss_items (
   raw_payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
-);
+  );
+
+  alter table public.rss_items add column if not exists content text;
+  alter table public.rss_items add column if not exists images jsonb not null default '[]'::jsonb;
 
 create index if not exists rss_items_status_idx
   on public.rss_items (status);
@@ -547,6 +552,8 @@ create table if not exists public.resources (
   format text not null,
   audience text not null,
   href text not null,
+  cover text,
+  access_code text,
   featured boolean not null default false,
   archived boolean not null default false,
   tags jsonb not null default '[]'::jsonb,
@@ -555,6 +562,8 @@ create table if not exists public.resources (
 );
 
 alter table public.resources add column if not exists access text not null default 'Free';
+alter table public.resources add column if not exists cover text;
+alter table public.resources add column if not exists access_code text;
 alter table public.resources drop constraint if exists resources_access_check;
 alter table public.resources add constraint resources_access_check check (access in ('Free', 'Member'));
 

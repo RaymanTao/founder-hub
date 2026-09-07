@@ -19,10 +19,6 @@ const coverThemes = [
   "bg-[#171311]"
 ];
 
-function formatNumber(number: number) {
-  return `№ ${String(number || 1).padStart(4, "0")}`;
-}
-
 function StatusPill({
   children,
   tone = "dark"
@@ -125,9 +121,9 @@ function FeaturedCard({ article }: { article: ArticleMeta }) {
         <StatusPill>{article.access === "Deep Dive" ? "深度" : "快讯"}</StatusPill>
         {article.verified ? <span className="font-semibold text-[#bce7cf]">✓ 已核对</span> : null}
         <StatusPill tone="green">{article.access === "Deep Dive" ? "会员" : "免费"}</StatusPill>
-        <span>{formatNumber(article.number)} · {article.source}</span>
+        <span>{article.source}</span>
       </div>
-      <h2 className="relative z-10 mt-5 max-w-3xl font-[var(--font-cjk)] text-3xl font-black leading-tight tracking-normal text-white sm:text-4xl lg:text-[40px]">
+      <h2 className="relative z-10 mt-5 max-w-3xl font-[var(--font-cjk)] text-2xl font-black leading-tight tracking-normal text-white/90 sm:text-3xl lg:text-[34px]">
         {article.title}
       </h2>
       <p className="relative z-10 mt-4 max-w-2xl text-base font-semibold leading-7 text-white/74">
@@ -162,14 +158,11 @@ function ArticleCard({
             </span>
           ) : null}
         </div>
-        <span className="absolute right-4 top-4 text-[11px] text-[#8b8178]">
-          {formatNumber(article.number)}
-        </span>
       </div>
 
       <div className="grid min-h-[216px] gap-4 p-5">
         <div>
-          <h3 className="font-[var(--font-cjk)] text-[19px] font-black leading-7 tracking-normal text-[#1d1815]">
+          <h3 className="font-[var(--font-cjk)] text-[17px] font-semibold leading-7 tracking-normal text-[#514941]">
             {article.title}
           </h3>
           <p className="mt-3 line-clamp-3 text-[15px] leading-7 text-[#635b52]">

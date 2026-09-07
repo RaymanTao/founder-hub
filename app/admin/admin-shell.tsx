@@ -14,7 +14,6 @@ const groups: NavGroup[] = [
   {
     label: "内容管理",
     items: [
-      { label: "文章管理", href: "/admin", icon: "▤", exact: true },
       { label: "RSS 聚合", href: "/admin/rss", icon: "◔" },
       { label: "内容洞察", href: "/admin/insights", icon: "◌" }
     ]
@@ -43,7 +42,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="admin-shell min-h-screen">
       <aside className="admin-sidebar">
-        <Link href="/admin" className="admin-brand">
+        <Link href="/admin/rss" className="admin-brand">
           <span className="admin-brand-mark">✦</span>
           <span>Founder Hub</span>
         </Link>

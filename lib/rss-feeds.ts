@@ -32,11 +32,16 @@ function fallback() {
   return fallbackFeeds as RssFeed[];
 }
 
-export async function getRssFeeds(): Promise<RssFeed[]> {
-  if (!isSupabaseConfigured()) return fallback();
-  const response = await supabaseFetch("rss_feeds?select=*&order=title.asc");
-  if (!response.ok) return fallback();
-  return ((await response.json()) as FeedRow[]).map(mapFeed);
+export async function getRssFeeds(options: { useFallback?: boolean } = {}): Promise<RssFeed[]> {
+  const useFallback = options.useFallback !== false;
+  if (!isSupabaseConfigured()) return useFallback ? fallback() : [];
+  try {
+    const response = await supabaseFetch("rss_feeds?select=*&order=title.asc");
+    if (!response.ok) return useFallback ? fallback() : [];
+    return ((await response.json()) as FeedRow[]).map(mapFeed);
+  } catch {
+    return useFallback ? fallback() : [];
+  }
 }
 
 export async function saveRssFeed(feed: RssFeed) {
@@ -57,6 +62,31 @@ export async function saveRssFeed(feed: RssFeed) {
     })
   });
   if (!response.ok) throw new Error(`RSS_FEED_SAVE_FAILED_${response.status}`);
+}
+
+export async function saveRssFeeds(feeds: RssFeed[]) {
+  if (!isSupabaseConfigured()) throw new Error("SUPABASE_NOT_CONFIGURED");
+  if (!feeds.length) return;
+
+  const response = await supabaseFetch("rss_feeds?on_conflict=id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(
+      feeds.map((feed) => ({
+        id: feed.id,
+        title: feed.title,
+        url: feed.url,
+        category: feed.category,
+        type: feed.type,
+        language: feed.language,
+        tags: feed.tags,
+        trust_score: feed.trustScore,
+        enabled: feed.enabled
+      }))
+    )
+  });
+
+  if (!response.ok) throw new Error(`RSS_FEEDS_SAVE_FAILED_${response.status}`);
 }
 
 export async function deleteRssFeed(id: string) {

@@ -28,30 +28,42 @@ function mapRun(row: RunRow): RssRun {
 
 export async function listRssRuns(limit = 10) {
   if (!isSupabaseConfigured()) return null;
-  const response = await supabaseFetch(`rss_feed_runs?select=*&order=started_at.desc&limit=${limit}`);
-  if (!response.ok) return null;
-  return ((await response.json()) as RunRow[]).map(mapRun);
+  try {
+    const response = await supabaseFetch(`rss_feed_runs?select=*&order=started_at.desc&limit=${limit}`);
+    if (!response.ok) return null;
+    return ((await response.json()) as RunRow[]).map(mapRun);
+  } catch {
+    return null;
+  }
 }
 
 export async function startRssRun(trigger: RssRun["trigger"]) {
   if (!isSupabaseConfigured()) return null;
-  const response = await supabaseFetch("rss_feed_runs?select=id", {
-    method: "POST",
-    headers: { Prefer: "return=representation" },
-    body: JSON.stringify({ trigger, status: "running" })
-  });
-  if (!response.ok) return null;
-  const rows = (await response.json()) as Array<{ id: string }>;
-  return rows[0]?.id ?? null;
+  try {
+    const response = await supabaseFetch("rss_feed_runs?select=id", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({ trigger, status: "running" })
+    });
+    if (!response.ok) return null;
+    const rows = (await response.json()) as Array<{ id: string }>;
+    return rows[0]?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function finishRssRun(id: string | null, input: { status: "success" | "failed"; feedCount?: number; itemCount?: number; message?: string }) {
   if (!id || !isSupabaseConfigured()) return;
-  await supabaseFetch(`rss_feed_runs?id=eq.${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    headers: { Prefer: "return=minimal" },
-    body: JSON.stringify({ status: input.status, feed_count: input.feedCount ?? 0, item_count: input.itemCount ?? 0, message: input.message ?? null, finished_at: new Date().toISOString() })
-  });
+  try {
+    await supabaseFetch(`rss_feed_runs?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ status: input.status, feed_count: input.feedCount ?? 0, item_count: input.itemCount ?? 0, message: input.message ?? null, finished_at: new Date().toISOString() })
+    });
+  } catch (error) {
+    console.warn("Unable to update RSS run record:", error);
+  }
 }
 
 export async function testRssFeedUrl(url: string) {

@@ -11,6 +11,8 @@ type ResourceRow = {
   format: string;
   audience: string;
   href: string;
+  cover: string | null;
+  access_code: string | null;
   featured: boolean;
   archived: boolean;
   tags: string[] | null;
@@ -28,6 +30,8 @@ const resourceFields = [
   "format",
   "audience",
   "href",
+  "cover",
+  "access_code",
   "featured",
   "archived",
   "tags"
@@ -45,6 +49,8 @@ function mapResourceRow(row: ResourceRow): Resource {
   return {
     ...row,
     archived: row.archived === true,
+    cover: row.cover ?? undefined,
+    accessCode: row.access_code ?? undefined,
     tags: row.tags ?? []
   };
 }
@@ -113,6 +119,8 @@ export async function upsertSupabaseResource(id: string, input: ResourceWriteInp
       format: input.format,
       audience: input.audience,
       href: input.href,
+      cover: input.cover || null,
+      access_code: input.accessCode || null,
       featured: input.featured,
       archived: input.archived,
       tags: input.tags

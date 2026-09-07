@@ -251,7 +251,7 @@ export default async function AdminArticleEditPage({ params, searchParams }: Pro
               保存文章
             </button>
             <Link
-              href="/admin"
+              href="/admin/rss"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
             >
               取消

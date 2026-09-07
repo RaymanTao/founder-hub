@@ -301,7 +301,10 @@ export async function createArticleFromUrl(url: string) {
   return slug;
 }
 
-export async function createArticleFromRssCandidate(candidate: RssCandidate) {
+export async function createArticleFromRssCandidate(
+  candidate: RssCandidate,
+  options: { content?: string; published?: boolean; cover?: string } = {}
+) {
   const slug = await ensureUniqueSlug(candidate.title);
   const date = candidate.publishedAt
     ? new Date(candidate.publishedAt).toISOString().slice(0, 10)
@@ -317,22 +320,23 @@ export async function createArticleFromRssCandidate(candidate: RssCandidate) {
     type: candidate.type,
     readingTime: "5 min",
     featured: false,
-    published: false,
+    published: options.published === true,
     archived: false,
     number: 0,
     source: candidate.feedTitle,
     sourceUrl: candidate.canonicalUrl || candidate.url,
     verified: false,
     access: "Free",
-    tags: candidate.suggestedTags
+    tags: candidate.suggestedTags,
+    cover: options.cover
   };
 
-  const body = createInterpretationTemplate({
-    title: candidate.title,
-    sourceUrl: candidate.canonicalUrl || candidate.url,
-    source: candidate.feedTitle,
-    description: candidate.description
-  });
+  const body = options.content?.trim() || createInterpretationTemplate({
+      title: candidate.title,
+      sourceUrl: candidate.canonicalUrl || candidate.url,
+      source: candidate.feedTitle,
+      description: candidate.description
+    });
 
   await writeArticle(slug, meta, body);
 

@@ -10,7 +10,12 @@
     "audience": "一人公司、独立开发者、AI 产品创始人",
     "href": "/products",
     "featured": true,
-    "tags": ["工具栈", "一人公司", "AI 产品"]
+    "tags": [
+      "工具栈",
+      "一人公司",
+      "AI 产品"
+    ],
+    "archived": false
   },
   {
     "id": "agent-automation-brief",
@@ -23,7 +28,12 @@
     "audience": "需要设计 Agent 或自动化流程的小团队",
     "href": "/writing/agent-automation-brief",
     "featured": true,
-    "tags": ["AI Agent", "自动化", "交付"]
+    "tags": [
+      "AI Agent",
+      "自动化",
+      "交付"
+    ],
+    "archived": true
   },
   {
     "id": "content-workflow-map",
@@ -36,6 +46,11 @@
     "audience": "用内容建立信任和获客路径的创始人",
     "href": "/writing/ai-content-workflow",
     "featured": false,
-    "tags": ["内容系统", "增长", "AI Workflow"]
+    "tags": [
+      "内容系统",
+      "增长",
+      "AI Workflow"
+    ],
+    "archived": false
   }
 ]

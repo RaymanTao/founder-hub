@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createResourceAction, saveResourceAction } from "@/app/admin/actions";
 import type { Resource } from "@/types/resource";
+import { ResourceCoverField } from "./resource-cover-field";
 
 const categoryOptions: Resource["category"][] = [
   "Toolkit",
@@ -50,6 +51,7 @@ export function ResourceForm({ resource }: { resource?: Resource }) {
 
       <div className="grid gap-5">
         <Field label="标题" name="title" defaultValue={resource?.title} />
+        <ResourceCoverField defaultValue={resource?.cover} />
         <label className="block text-sm font-medium text-[var(--foreground)]">
           描述
           <textarea
@@ -102,6 +104,14 @@ export function ResourceForm({ resource }: { resource?: Resource }) {
           <Field label="格式" name="format" defaultValue={resource?.format} />
           <Field label="链接" name="href" defaultValue={resource?.href} />
         </div>
+
+        <Field
+          label="百度云盘提取码（可选）"
+          name="accessCode"
+          defaultValue={resource?.accessCode}
+          required={false}
+          help="如果链接是百度云盘，请填写提取码；其他资源可以留空。"
+        />
 
         <Field label="适合人群" name="audience" defaultValue={resource?.audience} />
         <Field

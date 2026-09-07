@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
-import { getSupabaseArticleBySlug, listSupabaseArticles } from "@/lib/article-db";
+import { getSupabaseArticleBySlug, getSupabaseArticleBySlugFallback, listSupabaseArticles } from "@/lib/article-db";
+import { getRssCandidateByArticleSlug } from "@/lib/rss-items";
 import { Article, ArticleMeta } from "@/types/article";
 
 const contentDir = path.join(process.cwd(), "content", "writing");
@@ -57,21 +58,69 @@ export async function getFeaturedArticles() {
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const databaseArticle = await getSupabaseArticleBySlug(slug);
+  let normalizedSlug = slug;
+  try {
+    normalizedSlug = decodeURIComponent(slug);
+  } catch {
+    // Keep the original slug when the route parameter is not URI encoded.
+  }
+
+  const databaseArticle = await getSupabaseArticleBySlug(normalizedSlug);
   if (databaseArticle) return databaseArticle;
 
-  const files = await fs.readdir(contentDir);
-  const fileName = files.find((file) => file === `${slug}.mdx`);
+  let files: string[] = [];
+  try {
+    files = await fs.readdir(contentDir);
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
+      throw error;
+    }
+  }
+  const fileName = files.find((file) => file === `${normalizedSlug}.mdx`);
 
   if (!fileName) {
-    return null;
+    // RSS articles may have been written to Supabase before the app switched
+    // to MDX as its primary content source.
+    const databaseArticle = await getSupabaseArticleBySlugFallback(normalizedSlug);
+    if (databaseArticle) return databaseArticle;
+
+    // In MDX mode, RSS imports can exist only in rss_items on a deployed
+    // filesystem. Reconstruct the public article from its imported record.
+    const rssCandidate = await getRssCandidateByArticleSlug(normalizedSlug);
+    if (!rssCandidate?.content) return null;
+
+    return {
+      title: rssCandidate.title,
+      slug: normalizedSlug,
+      description: rssCandidate.description,
+      date: rssCandidate.publishedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+      category: rssCandidate.category,
+      type: rssCandidate.type,
+      readingTime: "5 min",
+      featured: false,
+      published: true,
+      archived: false,
+      number: 0,
+      source: rssCandidate.feedTitle,
+      sourceUrl: rssCandidate.url,
+      verified: false,
+      access: "Free",
+      tags: rssCandidate.suggestedTags,
+      cover: rssCandidate.images[0],
+      content: rssCandidate.content
+    } satisfies Article;
   }
 
   const raw = await fs.readFile(path.join(contentDir, fileName), "utf8");
   const { data, content } = matter(raw);
 
-  return {
+  const fileArticle = {
     ...normalizeArticleMeta(data),
     content
   };
+
+  if (fileArticle.published && !fileArticle.archived) return fileArticle;
+
+  // Prefer a published database copy when an older local MDX file is still a draft.
+  return (await getSupabaseArticleBySlugFallback(normalizedSlug)) ?? fileArticle;
 }

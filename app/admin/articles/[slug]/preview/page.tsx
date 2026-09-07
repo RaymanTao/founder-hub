@@ -1,9 +1,11 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArticleActions } from "@/components/articles/article-actions";
+import { FavoriteButton } from "@/components/articles/favorite-button";
+import { siteInfo } from "@/data/site";
 import { requireAdmin } from "@/lib/admin-auth";
 import { renderMarkdown } from "@/lib/markdown";
-import { formatDate } from "@/lib/utils";
 import { getArticleBySlug } from "@/lib/writing";
 
 type Props = {
@@ -60,35 +62,14 @@ export default async function AdminArticlePreviewPage({ params }: Props) {
       </div>
 
       <article>
-        <div className="text-sm text-[var(--muted)]">
-          <span>文章</span>
-          <span className="mx-2">/</span>
-          <span>{article.category}</span>
-          <span className="mx-2">/</span>
-          <span>№ {String(article.number).padStart(3, "0")}</span>
-        </div>
-
-        <header className="mt-6 rounded-[1.5rem] border border-[var(--border)] bg-[var(--surface)] p-7 shadow-[var(--shadow-soft)] sm:p-9">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-            <span>{article.type}</span>
-            <span>/</span>
-            <span>{article.access === "Free" ? "免费开放" : "深度文章"}</span>
-            <span>/</span>
-            <span>{article.published ? "已发布" : "草稿"}</span>
-            {article.verified ? (
-              <>
-                <span>/</span>
-                <span>已核对</span>
-              </>
-            ) : null}
-          </div>
-          <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight text-[var(--foreground)] sm:text-5xl">
+        <div className="mt-6 rounded-[1.5rem] border border-[var(--border)] bg-[var(--surface)] p-7 shadow-[var(--shadow-soft)] sm:p-9">
+          <h1 className="text-4xl font-semibold leading-tight tracking-tight text-[var(--foreground)] sm:text-5xl">
             {article.title}
           </h1>
-          <p className="mt-5 text-lg leading-8 text-[var(--secondary)]">
-            {article.description}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="prose-content">
+          {renderMarkdown(article.content, { title: article.title })}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-2">
             {article.tags.map((tag) => (
               <span
                 key={tag}
@@ -98,35 +79,13 @@ export default async function AdminArticlePreviewPage({ params }: Props) {
               </span>
             ))}
           </div>
-        </header>
-
-        <div className="mt-5 rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.72)] p-4 text-sm text-[var(--secondary)] sm:flex sm:items-center sm:justify-between sm:gap-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-[var(--foreground)]">
-              {article.verified ? "已核对" : "待核对"}
-            </span>
-            <span>/</span>
-            <span>来源：</span>
-            {article.sourceUrl ? (
-              <a
-                href={article.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-[var(--accent)] hover:text-[var(--accent-strong)]"
-              >
-                {article.source}
-              </a>
-            ) : (
-              <span>{article.source}</span>
-            )}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <ArticleActions
+              url={`${siteInfo.url}/writing/${article.slug}`}
+              sourceUrl={article.sourceUrl}
+            />
+            <FavoriteButton slug={article.slug} />
           </div>
-          <div className="mt-2 text-[var(--muted)] sm:mt-0">
-            {formatDate(article.date)} / {article.readingTime}
-          </div>
-        </div>
-
-        <div className="prose-content mt-8 rounded-[1.5rem] border border-[var(--border)] bg-white p-7 shadow-[var(--shadow-soft)] sm:p-10">
-          {renderMarkdown(article.content)}
         </div>
       </article>
     </main>

@@ -143,16 +143,24 @@ export async function updateNewsletterCampaign(id: string, input: Partial<Pick<N
 
 export async function listNewsletterCampaigns() {
   if (!isSupabaseConfigured()) return [] as NewsletterCampaign[];
-  const response = await supabaseFetch("newsletter_campaigns?select=id,subject,html,status,sent_count,failed_count,retry_count,created_at,sent_at,scheduled_at&order=created_at.desc&limit=50");
-  if (!response.ok) throw new Error(`NEWSLETTER_CAMPAIGNS_FAILED_${response.status}`);
-  return (await response.json()) as NewsletterCampaign[];
+  try {
+    const response = await supabaseFetch("newsletter_campaigns?select=id,subject,html,status,sent_count,failed_count,retry_count,created_at,sent_at,scheduled_at&order=created_at.desc&limit=50");
+    if (!response.ok) return [];
+    return (await response.json()) as NewsletterCampaign[];
+  } catch {
+    return [];
+  }
 }
 
 export async function listNewsletterTemplates() {
   if (!isSupabaseConfigured()) return [] as NewsletterTemplate[];
-  const response = await supabaseFetch("newsletter_templates?select=id,name,subject,html,created_at,updated_at&order=created_at.desc&limit=50");
-  if (!response.ok) throw new Error(`NEWSLETTER_TEMPLATES_FAILED_${response.status}`);
-  return (await response.json()) as NewsletterTemplate[];
+  try {
+    const response = await supabaseFetch("newsletter_templates?select=id,name,subject,html,created_at,updated_at&order=created_at.desc&limit=50");
+    if (!response.ok) return [];
+    return (await response.json()) as NewsletterTemplate[];
+  } catch {
+    return [];
+  }
 }
 
 export async function createNewsletterTemplate(input: { name: string; subject: string; html: string }) {

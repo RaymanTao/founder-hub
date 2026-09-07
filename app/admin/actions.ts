@@ -23,12 +23,13 @@ import {
   updateResource
 } from "@/lib/admin-resources";
 import {
+  deleteRssCandidates,
   getRssCandidateById,
   updateRssCandidateAnalysis,
   updateRssCandidateStatus
 } from "@/lib/rss-items";
 import { analyzeRssCandidate } from "@/lib/rss-ai";
-import { deleteRssFeed, getRssFeeds, saveRssFeed } from "@/lib/rss-feeds";
+import { deleteRssFeed, getRssFeeds, saveRssFeed, saveRssFeeds } from "@/lib/rss-feeds";
 import { parseOpml, rssFeedId } from "@/lib/rss-opml";
 import { finishRssRun, startRssRun, testRssFeedUrl } from "@/lib/rss-runs";
 import { importRssCandidates } from "@/lib/rss-import";
@@ -291,19 +292,21 @@ export async function analyzeRssCandidateAction(formData: FormData) {
 
 export async function saveRssFeedAction(formData: FormData) {
   await requireAdmin();
-  const id = requireString(formData, "id");
+  let id = requireString(formData, "id");
   const title = requireString(formData, "title");
   const url = requireString(formData, "url");
   const category = requireString(formData, "category") as ArticleCategory;
   const type = requireString(formData, "type") as ArticleType;
   const language = requireString(formData, "language") || "zh-CN";
   const tags = requireString(formData, "tags").split(",").map((tag) => tag.trim()).filter(Boolean);
+  const page = requireString(formData, "page") || "1";
 
   try {
     const parsed = new URL(url);
-    if (!id || !title || !["http:", "https:"].includes(parsed.protocol) || !categoryValues.includes(category) || !typeValues.includes(type)) {
+    if (!title || !["http:", "https:"].includes(parsed.protocol) || !categoryValues.includes(category) || !typeValues.includes(type)) {
       throw new Error("invalid");
     }
+    if (!id) id = rssFeedId(title, url);
     await saveRssFeed({
       id,
       title,
@@ -316,10 +319,27 @@ export async function saveRssFeedAction(formData: FormData) {
       enabled: formData.get("enabled") === "on"
     });
   } catch {
-    redirect("/admin/rss/sources?error=invalid-feed");
+    redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&error=invalid-feed`);
   }
 
-  redirect("/admin/rss/sources?saved=1");
+  redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&saved=1`);
+}
+
+export async function enableRssFeedsAction(formData: FormData) {
+  await requireAdmin();
+  const page = requireString(formData, "page") || "1";
+  const ids = requireString(formData, "ids").split(",").map((id) => id.trim()).filter(Boolean);
+  if (!ids.length) redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&error=enable-empty`);
+
+  try {
+    const feeds = await getRssFeeds({ useFallback: false });
+    const selected = feeds.filter((feed) => ids.includes(feed.id)).map((feed) => ({ ...feed, enabled: true }));
+    if (!selected.length) redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&error=enable-empty`);
+    await saveRssFeeds(selected);
+    redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&enabled=${selected.length}`);
+  } catch {
+    redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&error=enable-failed`);
+  }
 }
 
 export async function importRssOpmlAction(formData: FormData) {
@@ -332,70 +352,104 @@ export async function importRssOpmlAction(formData: FormData) {
 
   let imported = 0;
   let found = 0;
+  let feeds;
   try {
-    const feeds = parseOpml(xml);
+    feeds = parseOpml(xml);
     found = feeds.length;
+  } catch {
+    redirect("/admin/rss/sources?error=invalid-opml");
+  }
+
+  if (!feeds.length) redirect("/admin/rss/sources?error=no-feeds");
+
+  try {
     const existing = await getRssFeeds();
     const existingUrls = new Set(existing.map((feed) => feed.url.toLowerCase()));
-    for (const feed of feeds) {
-      if (existingUrls.has(feed.url.toLowerCase())) continue;
-      await saveRssFeed({
+    const newFeeds = feeds
+      .filter((feed) => !existingUrls.has(feed.url.toLowerCase()))
+      .map((feed) => ({
         id: rssFeedId(feed.title, feed.url),
         title: feed.title,
         url: feed.url,
         category: feed.category,
-        type: "Founder Analysis",
+        type: "Founder Analysis" as const,
         language: feed.language,
         tags: feed.tags,
         trustScore: 70,
         enabled: false
-      });
-      existingUrls.add(feed.url.toLowerCase());
-      imported += 1;
-    }
+      }));
+
+    await saveRssFeeds(newFeeds);
+    imported = newFeeds.length;
   } catch {
-    redirect("/admin/rss/sources?error=invalid-opml");
+    redirect("/admin/rss/sources?error=save-failed");
   }
+
   redirect(`/admin/rss/sources?imported=${imported}&found=${found}`);
+}
+
+export async function deleteRssCandidatesAction(formData: FormData) {
+  await requireAdmin();
+  const ids = requireString(formData, "ids").split("\n").map((id) => id.trim()).filter(Boolean).slice(0, 200);
+  const returnTo = requireString(formData, "returnTo") || "/admin/rss";
+  if (!ids.length) redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=delete-empty`);
+
+  try {
+    await deleteRssCandidates(ids);
+  } catch {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=delete-failed`);
+  }
+  redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}deleted=${ids.length}`);
 }
 
 export async function deleteRssFeedAction(formData: FormData) {
   await requireAdmin();
   const id = requireString(formData, "id");
-  if (!id) redirect("/admin/rss/sources?error=invalid-feed");
+  const page = requireString(formData, "page") || "1";
+  if (!id) redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&error=invalid-feed`);
   try {
     await deleteRssFeed(id);
   } catch {
-    redirect("/admin/rss/sources?error=delete-failed");
+    redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&error=delete-failed`);
   }
-  redirect("/admin/rss/sources?deleted=1");
+  redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&deleted=1`);
 }
 
 export async function testRssFeedAction(formData: FormData) {
   await requireAdmin();
   const url = requireString(formData, "url");
+  const page = requireString(formData, "page") || "1";
   try {
     const parsed = new URL(url);
     if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("invalid");
     const result = await testRssFeedUrl(parsed.toString());
-    redirect(`/admin/rss/sources?test=${result.ok ? "ok" : "failed"}&status=${result.status}`);
+    redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&test=${result.ok ? "ok" : "failed"}&status=${result.status}`);
   } catch {
-    redirect("/admin/rss/sources?test=failed");
+    redirect(`/admin/rss/sources?page=${encodeURIComponent(page)}&test=failed`);
   }
 }
 
 export async function runRssImportAction() {
   await requireAdmin();
   const runId = await startRssRun("manual");
+  let result: Awaited<ReturnType<typeof importRssCandidates>>;
+
   try {
-    const result = await importRssCandidates(5);
-    await finishRssRun(runId, { status: "success", ...result });
-    redirect(`/admin/rss?run=success&items=${result.itemCount}`);
+    result = await importRssCandidates(5);
+    if (
+      result.configuredFeedCount > 0 &&
+      result.failedFeedCount === result.configuredFeedCount
+    ) {
+      throw new Error("ALL_RSS_FEEDS_FAILED");
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "RSS import failed";
     await finishRssRun(runId, { status: "failed", message });
-    redirect("/admin/rss?run=failed");
+    redirect(`/admin/rss?run=failed&reason=${encodeURIComponent(message.slice(0, 240))}`);
   }
+
+  await finishRssRun(runId, { status: "success", ...result });
+  redirect(`/admin/rss?run=success&items=${result.itemCount}`);
 }
 
 function getResourceInput(formData: FormData) {
@@ -416,6 +470,8 @@ function getResourceInput(formData: FormData) {
     format: requireString(formData, "format"),
     audience: requireString(formData, "audience"),
     href: requireString(formData, "href"),
+    cover: requireString(formData, "cover") || undefined,
+    accessCode: requireString(formData, "accessCode") || undefined,
     featured: formData.get("featured") === "on",
     archived: formData.get("archived") === "on",
     tags: requireString(formData, "tags")

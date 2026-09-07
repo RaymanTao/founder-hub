@@ -34,6 +34,11 @@ export default async function ResourcesPage() {
             key={resource.id}
             className="rounded-[1.5rem] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:border-[rgba(138,106,82,0.32)]"
           >
+            {resource.cover ? (
+              <div className="relative mb-5 aspect-[16/8] overflow-hidden rounded-[1rem] bg-[rgba(138,106,82,0.08)]">
+                <img src={resource.cover} alt={`${resource.title}封面`} className="h-full w-full object-cover" />
+              </div>
+            ) : null}
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
               <span>{resource.category}</span>
               <span>/</span>
@@ -46,6 +51,7 @@ export default async function ResourcesPage() {
             <div className="mt-5 grid gap-3 border-t border-[var(--border)] pt-5 text-sm text-[var(--secondary)]">
               <p>格式：{resource.format}</p>
               <p>适合：{resource.audience}</p>
+              {resource.accessCode ? <p>百度云盘提取码：{resource.accessCode}</p> : null}
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               {resource.tags.map((tag) => (
@@ -77,6 +83,7 @@ export default async function ResourcesPage() {
               key={resource.id}
               className="flex flex-col justify-between gap-4 rounded-[1.25rem] border border-[var(--border)] bg-[rgba(255,252,247,0.68)] p-5 transition hover:border-[rgba(138,106,82,0.32)] sm:flex-row sm:items-center"
             >
+              {resource.cover ? <img src={resource.cover} alt={`${resource.title}封面`} loading="lazy" className="h-28 w-full rounded-[1rem] object-cover sm:h-24 sm:w-40" /> : null}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
                   {resource.category} / {resource.status}
@@ -87,6 +94,7 @@ export default async function ResourcesPage() {
                 <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--secondary)]">
                   {resource.description}
                 </p>
+                {resource.accessCode ? <p className="mt-2 text-sm text-[var(--secondary)]">百度云盘提取码：{resource.accessCode}</p> : null}
               </div>
               <div className="min-w-[260px]">
                 {resource.access === "Member" ? <Link href={`/resources/${resource.id}`} className="text-sm font-medium text-[var(--accent)]">会员专属 · 查看详情 →</Link> : resource.status === "Free" ? (

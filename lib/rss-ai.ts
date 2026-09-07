@@ -26,7 +26,8 @@ type ProviderConfig = {
 function getProviderConfig(): ProviderConfig {
   return {
     baseUrl: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
-    apiKey: process.env.DEEPSEEK_API_KEY ?? "",
+    // Keep the old variable as a compatibility fallback for existing local .env files.
+    apiKey: process.env.DEEPSEEK_API_KEY ?? process.env.ZHIPU_API_KEY ?? "",
     model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash"
   };
 }
@@ -51,7 +52,15 @@ function parseJsonObject(content: string) {
   const trimmed = content.trim();
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
   const json = fenced ?? trimmed.match(/\{[\s\S]*\}/)?.[0] ?? trimmed;
-  return JSON.parse(json) as Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(json) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("not-an-object");
+    }
+    return parsed as Record<string, unknown>;
+  } catch {
+    throw new Error("RSS_AI_INVALID_JSON");
+  }
 }
 
 function createMessages(candidate: RssCandidate): ChatMessage[] {
@@ -98,11 +107,8 @@ function createMessages(candidate: RssCandidate): ChatMessage[] {
   ];
 }
 
-export async function analyzeRssCandidate(candidate: RssCandidate): Promise<RssAiAnalysis> {
-  const config = getProviderConfig();
-  assertConfigured(config);
-
-  const response = await fetch(`${config.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+async function requestAnalysis(config: ProviderConfig, candidate: RssCandidate) {
+  return fetch(`${config.baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -113,28 +119,62 @@ export async function analyzeRssCandidate(candidate: RssCandidate): Promise<RssA
       messages: createMessages(candidate),
       temperature: 0.2,
       max_tokens: 900,
-      stream: false
+      stream: false,
+      // Prevent the reasoning channel from consuming the response while
+      // leaving message.content empty when JSON output is required.
+      thinking: { type: "disabled" },
+      response_format: { type: "json_object" }
     })
   });
+}
+
+export async function analyzeRssCandidate(candidate: RssCandidate): Promise<RssAiAnalysis> {
+  const config = getProviderConfig();
+  assertConfigured(config);
+
+  const response = await requestAnalysis(config, candidate);
 
   if (!response.ok) {
-    throw new Error(`RSS_AI_REQUEST_FAILED_${response.status}`);
+    const detail = (await response.text()).trim().slice(0, 300);
+    throw new Error(
+      `RSS_AI_REQUEST_FAILED_${response.status}${detail ? `: ${detail}` : ""}`
+    );
   }
 
   const payload = (await response.json()) as {
     choices?: Array<{
       message?: {
         content?: string;
+        reasoning_content?: string;
       };
     }>;
   };
-  const content = payload.choices?.[0]?.message?.content?.trim();
+  const message = payload.choices?.[0]?.message;
+  const content = (message?.content ?? message?.reasoning_content)?.trim();
 
   if (!content) {
-    throw new Error("RSS_AI_EMPTY_RESPONSE");
+    // DeepSeek may occasionally return an empty JSON response. Retry once so
+    // a transient provider response does not skip an otherwise valid item.
+    const retryResponse = await requestAnalysis(config, candidate);
+    if (!retryResponse.ok) {
+      const detail = (await retryResponse.text()).trim().slice(0, 300);
+      throw new Error(
+        `RSS_AI_REQUEST_FAILED_${retryResponse.status}${detail ? `: ${detail}` : ""}`
+      );
+    }
+    const retryPayload = (await retryResponse.json()) as typeof payload;
+    const retryMessage = retryPayload.choices?.[0]?.message;
+    const retryContent = (retryMessage?.content ?? retryMessage?.reasoning_content)?.trim();
+    if (!retryContent) throw new Error("RSS_AI_EMPTY_RESPONSE");
+    const retryParsed = parseJsonObject(retryContent);
+    return buildAnalysis(retryParsed, candidate);
   }
 
   const parsed = parseJsonObject(content);
+  return buildAnalysis(parsed, candidate);
+}
+
+function buildAnalysis(parsed: Record<string, unknown>, candidate: RssCandidate): RssAiAnalysis {
   const duplicateRisk = parsed.duplicateRisk;
 
   return {

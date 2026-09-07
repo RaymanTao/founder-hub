@@ -3,11 +3,11 @@
 import { useState } from "react";
 
 export function ArticleActions({
-  title,
-  url
+  url,
+  sourceUrl
 }: {
-  title: string;
   url: string;
+  sourceUrl?: string;
 }) {
   const [message, setMessage] = useState<string | null>(null);
 
@@ -20,22 +20,8 @@ export function ArticleActions({
     }
   };
 
-  const share = async () => {
-    if (!navigator.share) {
-      await copyLink();
-      return;
-    }
-
-    try {
-      await navigator.share({ title, url });
-      setMessage("分享面板已打开");
-    } catch {
-      setMessage(null);
-    }
-  };
-
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <button
         type="button"
         onClick={copyLink}
@@ -43,13 +29,16 @@ export function ArticleActions({
       >
         复制链接
       </button>
-      <button
-        type="button"
-        onClick={share}
-        className="min-h-10 rounded-full bg-[var(--foreground)] px-4 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
-      >
-        分享文章
-      </button>
+      {sourceUrl ? (
+        <a
+          href={sourceUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-10 items-center rounded-full bg-[var(--foreground)] px-4 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
+        >
+          查看原文
+        </a>
+      ) : null}
       {message ? (
         <span className="text-sm text-[var(--muted)]" aria-live="polite">
           {message}

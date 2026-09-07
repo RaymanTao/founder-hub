@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { setArticleArchivedAction } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/admin-auth";
 import { formatDate } from "@/lib/utils";
@@ -57,6 +58,7 @@ function buildAdminHref(params: {
 
 export default async function AdminPage({ searchParams }: Props) {
   await requireAdmin();
+  redirect("/admin/rss");
 
   const params = (await searchParams) ?? {};
   const q = params.q?.trim() ?? "";

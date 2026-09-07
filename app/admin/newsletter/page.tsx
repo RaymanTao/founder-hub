@@ -13,9 +13,11 @@ type Props = { searchParams?: Promise<{ error?: string; sent?: string; failed?: 
 export default async function AdminNewsletterPage({ searchParams }: Props) {
   await requireAdmin();
   const params = (await searchParams) ?? {};
-  const leads = await getAdminLeads();
-  const campaigns = await listNewsletterCampaigns();
-  const templates = await listNewsletterTemplates();
+  const [leads, campaigns, templates] = await Promise.all([
+    getAdminLeads(),
+    listNewsletterCampaigns(),
+    listNewsletterTemplates()
+  ]);
   const activeCount = leads.subscribers.filter((subscriber) => subscriber.status === "active").length;
   return (
     <main className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6 lg:px-8">

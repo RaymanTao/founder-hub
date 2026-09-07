@@ -12,10 +12,10 @@ export function SiteChrome({ children }: { children: ReactNode }) {
   if (isAdmin) return <>{children}</>;
 
   return (
-    <>
+    <div className="bg-[#F3ECE2]">
       <Navbar />
       <main className="bg-[#F3ECE2]">{children}</main>
       <Footer />
-    </>
+    </div>
   );
 }

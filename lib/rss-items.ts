@@ -11,6 +11,8 @@ type RssItemRow = {
   url: string;
   canonical_url: string;
   description: string | null;
+  content: string | null;
+  images: string[] | null;
   published_at: string | null;
   category: RssCandidate["category"];
   type: RssCandidate["type"];
@@ -34,6 +36,7 @@ type RssItemRow = {
 
 type ListRssCandidatesOptions = {
   status?: RssItemStatus | "All";
+  excludeStatus?: RssItemStatus;
   category?: ArticleCategory | "All";
   q?: string;
   limit?: number;
@@ -48,6 +51,8 @@ const rssItemFields = [
   "url",
   "canonical_url",
   "description",
+  "content",
+  "images",
   "published_at",
   "category",
   "type",
@@ -79,6 +84,8 @@ function mapRssItemRow(row: RssItemRow): RssCandidate {
     url: row.url,
     canonicalUrl: row.canonical_url,
     description: row.description ?? "",
+    content: row.content ?? "",
+    images: row.images ?? [],
     publishedAt: row.published_at,
     category: row.category,
     type: row.type,
@@ -111,6 +118,10 @@ function buildQuery(options: ListRssCandidatesOptions) {
     params.set("status", `eq.${options.status}`);
   }
 
+  if (options.excludeStatus) {
+    params.append("status", `neq.${options.excludeStatus}`);
+  }
+
   if (options.category && options.category !== "All") {
     params.set("category", `eq.${options.category}`);
   }
@@ -125,15 +136,14 @@ function buildQuery(options: ListRssCandidatesOptions) {
 
 export async function listRssCandidates(options: ListRssCandidatesOptions = {}) {
   if (!isSupabaseConfigured()) return null;
-
-  const response = await supabaseFetch(`rss_items?${buildQuery(options)}`);
-
-  if (!response.ok) {
-    throw new Error(`RSS_ITEMS_LIST_FAILED_${response.status}`);
+  try {
+    const response = await supabaseFetch(`rss_items?${buildQuery(options)}`);
+    if (!response.ok) return null;
+    const rows = (await response.json()) as RssItemRow[];
+    return rows.map(mapRssItemRow);
+  } catch {
+    return null;
   }
-
-  const rows = (await response.json()) as RssItemRow[];
-  return rows.map(mapRssItemRow);
 }
 
 export async function getRssCandidateById(id: string) {
@@ -176,6 +186,45 @@ export async function updateRssCandidateStatus(
     throw new Error(`RSS_ITEM_STATUS_FAILED_${response.status}`);
   }
 
+  return true;
+}
+
+export async function getRssCandidateByArticleSlug(slug: string) {
+  if (!isSupabaseConfigured()) return null;
+
+  const response = await supabaseFetch(
+    `rss_items?article_slug=eq.${encodeURIComponent(slug)}&status=eq.imported&select=${rssItemFields}&limit=1`
+  );
+
+  if (!response.ok) return null;
+
+  const rows = (await response.json()) as RssItemRow[];
+  return rows[0] ? mapRssItemRow(rows[0]) : null;
+}
+
+export async function getRssCandidateByCanonicalUrl(canonicalUrl: string) {
+  if (!isSupabaseConfigured()) return null;
+
+  const response = await supabaseFetch(
+    `rss_items?canonical_url=eq.${encodeURIComponent(canonicalUrl)}&select=${rssItemFields}&limit=1`
+  );
+
+  if (!response.ok) return null;
+
+  const rows = (await response.json()) as RssItemRow[];
+  return rows[0] ? mapRssItemRow(rows[0]) : null;
+}
+
+export async function deleteRssCandidates(ids: string[]) {
+  if (!isSupabaseConfigured()) return false;
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+  if (!uniqueIds.length) return false;
+  const filter = uniqueIds.map((id) => encodeURIComponent(id)).join(",");
+  const response = await supabaseFetch(`rss_items?id=in.(${filter})`, {
+    method: "DELETE",
+    headers: { Prefer: "return=minimal" }
+  });
+  if (!response.ok) throw new Error(`RSS_ITEMS_DELETE_FAILED_${response.status}`);
   return true;
 }
 

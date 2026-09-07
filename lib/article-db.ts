@@ -1,5 +1,6 @@
 import { Article, ArticleMeta } from "@/types/article";
 import { isSupabaseConfigured, supabaseFetch } from "@/lib/supabase";
+import { revalidateTag, unstable_cache } from "next/cache";
 
 type ArticleRow = {
   id?: string;
@@ -61,6 +62,9 @@ const articleFields = [
   "cover"
 ].join(",");
 
+const articleCacheTag = "articles";
+const articleCacheSeconds = 60;
+
 function isSupabaseArticleSourceEnabled() {
   return process.env.ARTICLE_CONTENT_SOURCE === "supabase";
 }
@@ -96,9 +100,7 @@ export function shouldWriteArticlesToSupabase() {
   return shouldReadArticlesFromSupabase();
 }
 
-export async function listSupabaseArticles() {
-  if (!shouldReadArticlesFromSupabase()) return null;
-
+async function fetchSupabaseArticles() {
   const response = await supabaseFetch(
     `articles?select=${articleFields}&order=date.desc,number.desc`
   );
@@ -111,8 +113,31 @@ export async function listSupabaseArticles() {
   return rows.map(mapArticleRow);
 }
 
+const getCachedSupabaseArticles = unstable_cache(
+  fetchSupabaseArticles,
+  ["articles-list"],
+  { revalidate: articleCacheSeconds, tags: [articleCacheTag] }
+);
+
+export async function listSupabaseArticles() {
+  if (!shouldReadArticlesFromSupabase()) return null;
+
+  return getCachedSupabaseArticles();
+}
+
 export async function getSupabaseArticleBySlug(slug: string) {
   if (!shouldReadArticlesFromSupabase()) return null;
+
+  return getCachedSupabaseArticleBySlug(slug);
+}
+
+export async function getSupabaseArticleBySlugFallback(slug: string) {
+  if (!isSupabaseConfigured()) return null;
+
+  return getCachedSupabaseArticleBySlug(slug);
+}
+
+async function fetchSupabaseArticleBySlug(slug: string) {
 
   const response = await supabaseFetch(
     `articles?slug=eq.${encodeURIComponent(slug)}&select=${articleFields},body&limit=1`
@@ -131,6 +156,12 @@ export async function getSupabaseArticleBySlug(slug: string) {
     content: row.body ?? ""
   } satisfies Article;
 }
+
+const getCachedSupabaseArticleBySlug = unstable_cache(
+  async (slug: string) => fetchSupabaseArticleBySlug(slug),
+  ["article-by-slug"],
+  { revalidate: articleCacheSeconds, tags: [articleCacheTag] }
+);
 
 function toArticlePayload(article: ArticleWriteInput) {
   return {
@@ -216,6 +247,7 @@ export async function upsertSupabaseArticle(article: ArticleWriteInput) {
   }
 
   await createArticleRevision(row.id, article);
+  revalidateTag(articleCacheTag, "max");
   return row;
 }
 

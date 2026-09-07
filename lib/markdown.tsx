@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { articleHtmlMarker, removeDuplicateTitleHeading, sanitizeArticleHtml } from "@/lib/article-html";
 
 function renderInline(text: string) {
   const parts = text.split(/(\[[^\]]+\]\([^)]+\)|`[^`]+`)/g).filter(Boolean);
@@ -31,13 +32,27 @@ function renderInline(text: string) {
   });
 }
 
-export function renderMarkdown(content: string) {
-  const lines = content.split("\n");
+export function renderMarkdown(content: string, options: { title?: string } = {}) {
+  if (content.trimStart().startsWith(articleHtmlMarker)) {
+    const html = content.trimStart().slice(articleHtmlMarker.length).trim();
+    const safeHtml = removeDuplicateTitleHeading(sanitizeArticleHtml(html), options.title ?? "");
+    return <div dangerouslySetInnerHTML={{ __html: safeHtml }} />;
+  }
+
+  let skippedDuplicateTitle = false;
+  const normalizedTitle = options.title?.replace(/[\s\u00a0]+/g, " ").trim().toLowerCase();
+  const lines = content.split("\n").filter((line) => {
+    if (skippedDuplicateTitle || !normalizedTitle || !line.trim().startsWith("# ")) return true;
+    if (line.trim().slice(2).replace(/[\s\u00a0]+/g, " ").trim().toLowerCase() !== normalizedTitle) return true;
+    skippedDuplicateTitle = true;
+    return false;
+  });
   const nodes: ReactNode[] = [];
   let paragraph: string[] = [];
   let listItems: string[] = [];
   let quoteLines: string[] = [];
   let codeLines: string[] = [];
+  let tableLines: string[] = [];
   let inCode = false;
 
   const flushParagraph = () => {
@@ -84,11 +99,34 @@ export function renderMarkdown(content: string) {
     }
   };
 
+  const flushTable = () => {
+    if (tableLines.length < 2) {
+      tableLines = [];
+      return;
+    }
+    const rows = tableLines
+      .filter((line) => !/^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line))
+      .map((line) => line.trim().replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim()));
+    if (rows.length) {
+      const width = Math.max(...rows.map((row) => row.length));
+      nodes.push(
+        <div key={`table-${nodes.length}`} className="my-6 overflow-x-auto">
+          <table>
+            <thead><tr>{rows[0].map((cell, index) => <th key={`${cell}-${index}`}>{renderInline(cell)}</th>)}</tr></thead>
+            <tbody>{rows.slice(1).map((row, rowIndex) => <tr key={`row-${rowIndex}`}>{[...row, ...Array(width - row.length).fill("")].map((cell, index) => <td key={`${rowIndex}-${index}`}>{renderInline(cell)}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      );
+    }
+    tableLines = [];
+  };
+
   for (const line of lines) {
     if (line.trim().startsWith("```")) {
       flushParagraph();
       flushList();
       flushQuote();
+      flushTable();
       if (inCode) {
         flushCode();
       }
@@ -105,8 +143,19 @@ export function renderMarkdown(content: string) {
       flushParagraph();
       flushList();
       flushQuote();
+      flushTable();
       continue;
     }
+
+    if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+      flushParagraph();
+      flushList();
+      flushQuote();
+      tableLines.push(line.trim());
+      continue;
+    }
+
+    if (tableLines.length) flushTable();
 
     if (line.startsWith("# ")) {
       flushParagraph();
@@ -175,6 +224,7 @@ export function renderMarkdown(content: string) {
   flushList();
   flushQuote();
   flushCode();
+  flushTable();
 
   return nodes;
 }

@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="zh-CN" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body
         className={`${manrope.variable} ${cormorant.variable} ${notoSansSC.variable} font-[var(--font-sans)] antialiased`}
       >

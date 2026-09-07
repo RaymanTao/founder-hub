@@ -71,11 +71,15 @@ export async function getAdminLeads() {
     };
   }
 
-  const [subscribers, resourceLeads, readerFavorites] = await Promise.all([
+  const results = await Promise.allSettled([
     getNewsletterSubscribers(),
     getResourceLeads(),
     getReaderFavorites()
   ]);
+
+  const subscribers = results[0].status === "fulfilled" ? results[0].value : [];
+  const resourceLeads = results[1].status === "fulfilled" ? results[1].value : [];
+  const readerFavorites = results[2].status === "fulfilled" ? results[2].value : [];
 
   return {
     configured: true,

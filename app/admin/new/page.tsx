@@ -72,7 +72,7 @@ export default async function AdminNewArticlePage({ searchParams }: Props) {
           </div>
           <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-6 sm:flex-row">
             <button type="submit" className="min-h-11 rounded-full bg-[var(--foreground)] px-5 text-sm font-medium text-white transition hover:bg-[var(--accent)]">创建文章</button>
-            <Link href="/admin" className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]">取消</Link>
+            <Link href="/admin/rss" className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.72)] px-5 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]">取消</Link>
           </div>
         </div>
       </form>

@@ -35,9 +35,15 @@ export async function supabaseFetch(path: string, init: RequestInit = {}) {
     ...(init.headers ?? {})
   };
 
+  const timeoutSignal = AbortSignal.timeout(5000);
+  const signal = init.signal
+    ? AbortSignal.any([init.signal, timeoutSignal])
+    : timeoutSignal;
+
   return fetch(`${config.url}/rest/v1/${path}`, {
     cache: "no-store",
     ...init,
+    signal,
     headers
   });
 }

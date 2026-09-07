@@ -11,6 +11,8 @@ export type RssCandidate = {
   url: string;
   canonicalUrl: string;
   description: string;
+  content: string;
+  images: string[];
   publishedAt: string | null;
   category: ArticleCategory;
   type: ArticleType;
